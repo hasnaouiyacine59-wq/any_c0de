@@ -23,7 +23,8 @@ def generate_user():
     num = random_num()
 
     email = f"kalawssimatrix+{num}@gmail.com"
-    # email = f"{fname.lower()}.{lname.lower()}@{random.choice(DOMAINS)}"
+    email = f"{fname.lower()}.{lname.lower()}@{random.choice(DOMAINS)}"
+    # username = f"{fname.lower()}{lname.lower()}{num}"
     username = f"{fname.lower()}{lname.lower()}{num}"
     password = f"{fname}{lname}{num}!"
 
@@ -55,6 +56,12 @@ if __name__ == "__main__":
                 "--disable-extensions-except=",
                 "--disable-plugins-discovery",
                 "--start-maximized",
+                # "--proxy-server=socks5://127.0.0.1:9050",
+                "--disable-webrtc",
+                "--enforce-webrtc-ip-permission-check",
+                "--webrtc-ip-handling-policy=disable_non_proxied_udp",
+                "--force-webrtc-ip-handling-policy",
+                "--disable-background-networking",
             ],
             ignore_default_args=["--enable-automation"],
         )

@@ -1,0 +1,513 @@
+context.add_init_script(f"""
+                // ── 0. Native toString hardening — must run first ──
+                (function() {{
+                    const _nativeToString = Function.prototype.toString;
+                    const _registry = new WeakMap();
+                    Function.prototype.toString = function() {{
+                        return _registry.has(this) ? _registry.get(this) : _nativeToString.call(this);
+                    }};
+                    // expose helper for patched functions to register their native string
+                    window.__nativeReg = (fn, name) => {{
+                        _registry.set(fn, `function ${{name}}() {{ [native code] }}`);
+                        return fn;
+                    }};
+                }})();
+
+                // ── 1. webdriver — delete from prototype so descriptor check passes ──
+                try {{ delete Object.getPrototypeOf(navigator).webdriver; }} catch(e) {{}}
+
+                // ── 2. window.chrome ──
+                window.chrome = {{
+                    app: {{ isInstalled: false, InstallState: {{}}, RunningState: {{}} }},
+                    csi: () => ({{ pageT: Date.now(), startE: Date.now(), tran: Math.floor(Math.random()*20)+1 }}),
+                    loadTimes: () => {{
+                        const t = Date.now() / 1000;
+                        return {{
+                            commitLoadTime: t - 0.4, connectionInfo: 'h2',
+                            finishDocumentLoadTime: t - 0.1, finishLoadTime: t,
+                            firstPaintAfterLoadTime: 0, firstPaintTime: t - 0.3,
+                            navigationType: 'Other', npnNegotiatedProtocol: 'h2',
+                            requestTime: t - 0.5, startLoadTime: t - 0.5,
+                            wasAlternateProtocolAvailable: false,
+                            wasFetchedViaSpdy: true, wasNpnNegotiated: true,
+                        }};
+                    }},
+                    runtime: {{
+                        id: undefined, lastError: undefined,
+                        OnInstalledReason: {{}}, OnRestartRequiredReason: {{}},
+                        PlatformArch: {{}}, PlatformNaclArch: {{}},
+                        PlatformOs: {{}}, RequestUpdateCheckStatus: {{}},
+                        connect: () => undefined, sendMessage: () => undefined,
+                    }},
+                    webstore: {{ onInstallStageChanged: {{}}, onDownloadProgress: {{}} }},
+                }};
+
+                // ── 3. plugins — 3 entries matching real Chrome ──
+                (function() {{
+                    function _mime(type, suf, desc) {{
+                        return {{ type, suffixes: suf, description: desc, enabledPlugin: null }};
+                    }}
+                    function _plugin(name, fn, desc, mimes) {{
+                        const p = {{ name, filename: fn, description: desc, length: mimes.length }};
+                        mimes.forEach((m, i) => {{ p[i] = m; m.enabledPlugin = p; }});
+                        p.item = (i) => p[i] ?? null;
+                        p.namedItem = (n) => mimes.find(m => m.type === n) ?? null;
+                        p[Symbol.iterator] = function*() {{ for (let i=0;i<this.length;i++) yield this[i]; }};
+                        return p;
+                    }}
+                    const pdf1 = _mime('application/pdf', 'pdf', 'Portable Document Format');
+                    const pdf2 = _mime('text/pdf', 'pdf', 'Portable Document Format');
+                    const plugins = [
+                        _plugin('PDF Viewer',         'internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                        _plugin('Chrome PDF Viewer',  'internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                        _plugin('Chromium PDF Viewer','internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                    ];
+                    const pa = {{ length: plugins.length }};
+                    plugins.forEach((p, i) => {{ pa[i] = p; }});
+                    pa.item = (i) => pa[i] ?? null;
+                    pa.namedItem = (n) => plugins.find(p => p.name === n) ?? null;
+                    pa.refresh = () => {{}};
+                    pa[Symbol.iterator] = function*() {{ for(let i=0;i<this.length;i++) yield this[i]; }};
+                    Object.defineProperty(navigator, 'plugins', {{ get: () => pa }});
+                    const allMimes = [pdf1, pdf2];
+                    const ma = {{ length: allMimes.length }};
+                    allMimes.forEach((m, i) => {{ ma[i] = m; }});
+                    ma.item = (i) => ma[i] ?? null;
+                    ma.namedItem = (n) => allMimes.find(m => m.type === n) ?? null;
+                    ma[Symbol.iterator] = function*() {{ for(let i=0;i<this.length;i++) yield this[i]; }};
+                    Object.defineProperty(navigator, 'mimeTypes', {{ get: () => ma }});
+                }})();
+
+                // ── 4. platform ──
+                Object.defineProperty(navigator, 'platform', {{ get: () => '{_platform}' }});
+
+                // ── 5. userAgentData — cached object, correct brand order ──
+                (function() {{
+                    const _brands = [
+                        {{ brand: 'Not=A?Brand',   version: '99'           }},
+                        {{ brand: 'Chromium',      version: '{_chrome_ver}' }},
+                        {{ brand: 'Google Chrome', version: '{_chrome_ver}' }},
+                    ];
+                    const _uad = {{
+                        brands: _brands,
+                        mobile: {'true' if is_mobile else 'false'},
+                        platform: '{_ua_platform}',
+                        toJSON: () => ({{ brands: _brands, mobile: {'true' if is_mobile else 'false'}, platform: '{_ua_platform}' }}),
+                        getHighEntropyValues: (hints) => Promise.resolve({{
+                            architecture: {'""' if is_mobile else '"x86"'},
+                            bitness: {'""' if is_mobile else '"64"'},
+                            brands: _brands,
+                            fullVersionList: [
+                                {{ brand: 'Not=A?Brand',   version: '99.0.0.0'             }},
+                                {{ brand: 'Chromium',      version: '{_chrome_ver}.0.0.0'  }},
+                                {{ brand: 'Google Chrome', version: '{_chrome_ver}.0.0.0'  }},
+                            ],
+                            mobile: {'true' if is_mobile else 'false'},
+                            model: '{"" if not is_mobile else _model}',
+                            platform: '{_ua_platform}',
+                            platformVersion: '{_ua_platform_ver}',
+                            uaFullVersion: '{_chrome_ver}.0.0.0',
+                            wow64: false,
+                        }}),
+                    }};
+                    Object.defineProperty(navigator, 'userAgentData', {{ get: () => _uad }});
+                }})();
+
+                // ── 6. touch ──
+                {'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 5 });' if is_mobile else 'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 0 });'}
+                {'window.ontouchstart = null;' if is_mobile else ''}
+
+                // ── 7. language / locale ──
+                Object.defineProperty(navigator, 'languages', {{ get: () => {json.dumps([t.split(';')[0] for t in accept_lang.split(',')])} }});
+                Object.defineProperty(navigator, 'language',  {{ get: () => '{lang_primary}' }});
+
+                // ── 8. misc navigator ──
+                Object.defineProperty(navigator, 'vendor',        {{ get: () => 'Google Inc.' }});
+                Object.defineProperty(navigator, 'doNotTrack',    {{ get: () => null }});
+                Object.defineProperty(navigator, 'cookieEnabled', {{ get: () => true }});
+                Object.defineProperty(navigator, 'appName',       {{ get: () => 'Netscape' }});
+                Object.defineProperty(navigator, 'appVersion',    {{ get: () => '{_app_version}' }});
+                Object.defineProperty(navigator, 'product',       {{ get: () => 'Gecko' }});
+                Object.defineProperty(navigator, 'productSub',    {{ get: () => '20030107' }});
+
+                // ── 9. window geometry ──
+                const _toolbarH = {toolbar_height};
+                Object.defineProperty(window,  'outerHeight', {{ get: () => window.innerHeight + _toolbarH }});
+                Object.defineProperty(window,  'outerWidth',  {{ get: () => window.innerWidth }});
+                Object.defineProperty(screen,  'width',       {{ get: () => {chosen_viewport['width']}  }});
+                Object.defineProperty(screen,  'height',      {{ get: () => {chosen_viewport['height']} }});
+                Object.defineProperty(screen,  'availWidth',  {{ get: () => {chosen_viewport['width']}  }});
+                Object.defineProperty(screen,  'availHeight', {{ get: () => {chosen_viewport['height']} }});
+                Object.defineProperty(screen,  'availTop',    {{ get: () => 0 }});
+                Object.defineProperty(screen,  'availLeft',   {{ get: () => 0 }});
+                Object.defineProperty(screen,  'colorDepth',  {{ get: () => 24 }});
+                Object.defineProperty(screen,  'pixelDepth',  {{ get: () => 24 }});
+                Object.defineProperty(screen,  'orientation', {{ get: () => ({{
+                    type: '{chosen_viewport['width'] > chosen_viewport['height'] and 'landscape-primary' or 'portrait-primary'}',
+                    angle: 0, addEventListener: () => {{}}, removeEventListener: () => {{}}
+                }}) }});
+                Object.defineProperty(window, 'devicePixelRatio', {{ get: () => {dpr} }});
+
+                // ── 10. hardware ──
+                Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => {hw_concurrency} }});
+                Object.defineProperty(navigator, 'deviceMemory',        {{ get: () => {device_memory}  }});
+
+                // ── 11. canvas noise — single _orig reference, no double-noise ──
+                (function() {{
+                    const SALT = {canvas_salt};
+                    const _orig2d = CanvasRenderingContext2D.prototype.getImageData;
+
+                    function _noise(data) {{
+                        for (let i = 0; i < data.length; i += 4) {{
+                            data[i]     ^= SALT;
+                            data[i + 1] ^= (SALT * 3) & 0xff;
+                            data[i + 2] ^= (SALT * 7) & 0xff;
+                        }}
+                    }}
+
+                    CanvasRenderingContext2D.prototype.getImageData = __nativeReg(function(...a) {{
+                        const d = _orig2d.apply(this, a);
+                        _noise(d.data);
+                        return d;
+                    }}, 'getImageData');
+
+                    const _origURL  = HTMLCanvasElement.prototype.toDataURL;
+                    const _origBlob = HTMLCanvasElement.prototype.toBlob;
+
+                    function _applyNoise(canvas) {{
+                        const ctx = canvas.getContext('2d');
+                        if (ctx && canvas.width && canvas.height) {{
+                            const img = _orig2d.call(ctx, 0, 0, canvas.width, canvas.height);
+                            _noise(img.data);
+                            ctx.putImageData(img, 0, 0);
+                        }}
+                    }}
+
+                    HTMLCanvasElement.prototype.toDataURL = __nativeReg(function(...a) {{
+                        _applyNoise(this);
+                        return _origURL.apply(this, a);
+                    }}, 'toDataURL');
+
+                    HTMLCanvasElement.prototype.toBlob = __nativeReg(function(cb, ...a) {{
+                        _applyNoise(this);
+                        return _origBlob.call(this, cb, ...a);
+                    }}, 'toBlob');
+
+                    if (typeof OffscreenCanvasRenderingContext2D !== 'undefined') {{
+                        const _origOff = OffscreenCanvasRenderingContext2D.prototype.getImageData;
+                        OffscreenCanvasRenderingContext2D.prototype.getImageData = __nativeReg(function(...a) {{
+                            const d = _origOff.apply(this, a);
+                            _noise(d.data);
+                            return d;
+                        }}, 'getImageData');
+                    }}
+                }})();
+
+                // ── 12. WebGL — vendor/renderer + extra params + readPixels noise ──
+                (function() {{
+                    const V = '{webgl_vendor}', R = '{webgl_renderer}', S = {canvas_salt};
+                    function _patch(proto) {{
+                        const _gp = proto.getParameter;
+                        proto.getParameter = __nativeReg(function(p) {{
+                            if (p === 37445) return V;   // UNMASKED_VENDOR_WEBGL
+                            if (p === 37446) return R;   // UNMASKED_RENDERER_WEBGL
+                            if (p === 7937)  return R;   // RENDERER (same as unmasked)
+                            if (p === 7936)  return V;   // VENDOR
+                            if (p === 3379)  return 16384;  // MAX_TEXTURE_SIZE
+                            if (p === 34076) return 16384;  // MAX_CUBE_MAP_TEXTURE_SIZE
+                            if (p === 3386)  return new Int32Array([16384, 16384]); // MAX_VIEWPORT_DIMS
+                            if (p === 33902) return new Float32Array([1, 1]);       // ALIASED_LINE_WIDTH_RANGE
+                            if (p === 33901) return new Float32Array([1, 1024]);    // ALIASED_POINT_SIZE_RANGE
+                            return _gp.call(this, p);
+                        }}, 'getParameter');
+                        const _rp = proto.readPixels;
+                        proto.readPixels = __nativeReg(function(...a) {{
+                            _rp.apply(this, a);
+                            const buf = a[6];
+                            if (buf instanceof Uint8Array && buf.length >= 4) {{
+                                // noise full first pixel (RGBA)
+                                buf[0] ^= S;
+                                buf[1] ^= (S * 3) & 0xff;
+                                buf[2] ^= (S * 7) & 0xff;
+                                buf[3] ^= (S * 5) & 0xff;
+                            }}
+                        }}, 'readPixels');
+                        const _gse = proto.getSupportedExtensions;
+                        proto.getSupportedExtensions = __nativeReg(function() {{
+                            const exts = _gse.call(this) || [];
+                            return exts.filter(e => !e.includes('debug') && !e.includes('WEBGL_debug'));
+                        }}, 'getSupportedExtensions');
+                    }}
+                    _patch(WebGLRenderingContext.prototype);
+                    _patch(WebGL2RenderingContext.prototype);
+                }})();
+
+                // ── 13. AudioContext — noise OfflineAudioContext (actual fingerprint vector) ──
+                (function() {{
+                    const ASALT = {audio_salt};
+                    const _origStart = OfflineAudioContext.prototype.startRendering;
+                    OfflineAudioContext.prototype.startRendering = __nativeReg(function() {{
+                        return _origStart.call(this).then(buf => {{
+                            const ch = buf.getChannelData(0);
+                            for (let i = 0; i < ch.length; i++) ch[i] += (Math.random() - 0.5) * ASALT;
+                            return buf;
+                        }});
+                    }}, 'startRendering');
+                    const _origGCD = AudioBuffer.prototype.getChannelData;
+                    AudioBuffer.prototype.getChannelData = __nativeReg(function(ch) {{
+                        const data = _origGCD.call(this, ch);
+                        if (ch === 0) data[0] += ASALT * 0.0001;
+                        return data;
+                    }}, 'getChannelData');
+                }})();
+
+                // ── 14. Battery ──
+                navigator.getBattery = () => Promise.resolve({{
+                    charging: {battery_charging}, level: {battery_level},
+                    chargingTime: 0, dischargingTime: Infinity,
+                    addEventListener: () => {{}}
+                }});
+
+                // ── 15. Network — cached, with all fields ──
+                (function() {{
+                    const _conn = {{
+                        type: 'wifi', effectiveType: '4g',
+                        rtt: {rtt}, downlink: {downlink}, downlinkMax: Infinity,
+                        saveData: false, onchange: null,
+                        addEventListener: () => {{}}, removeEventListener: () => {{}}
+                    }};
+                    Object.defineProperty(navigator, 'connection', {{ get: () => _conn }});
+                }})();
+
+                // ── 16. Permissions ──
+                (function() {{
+                    const _pq = navigator.permissions.query.bind(navigator.permissions);
+                    navigator.permissions.query = __nativeReg(function(p) {{
+                        if (p.name === 'notifications') return Promise.resolve({{ state: 'default' }});
+                        if (p.name === 'geolocation')   return Promise.resolve({{ state: 'prompt'  }});
+                        if (p.name === 'camera')        return Promise.resolve({{ state: 'prompt'  }});
+                        if (p.name === 'microphone')    return Promise.resolve({{ state: 'prompt'  }});
+                        return _pq(p);
+                    }}, 'query');
+                }})();
+
+                // ── 17. speechSynthesis — locale-matched voices ──
+                (function() {{
+                    const _voices = [
+                        {{ voiceURI: 'Google {lang_primary}', name: 'Google {lang_primary}',
+                           lang: '{lang_primary}', localService: false, default: true }},
+                        {{ voiceURI: 'Google {lang_base}',    name: 'Google {lang_base}',
+                           lang: '{lang_base}',    localService: false, default: false }},
+                    ];
+                    speechSynthesis.getVoices = () => _voices;
+                    window.addEventListener('voiceschanged', () => {{}}, {{ once: true }});
+                }})();
+
+                // ── 18. mediaDevices — random hex deviceIds ──
+                (function() {{
+                    function _rnd() {{ return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(16).slice(2).padEnd(36,'0'); }}
+                    const _devs = [
+                        {{ kind: 'audioinput',  label: '', deviceId: _rnd(), groupId: _rnd() }},
+                        {{ kind: 'audiooutput', label: '', deviceId: _rnd(), groupId: _rnd() }},
+                        {{ kind: 'videoinput',  label: '', deviceId: _rnd(), groupId: _rnd() }},
+                    ];
+                    if (navigator.mediaDevices)
+                        navigator.mediaDevices.enumerateDevices = __nativeReg(
+                            () => Promise.resolve(_devs), 'enumerateDevices'
+                        );
+                }})();
+
+                // ── 19. Error.stackTraceLimit (V8 signal) ──
+                Error.stackTraceLimit = 10;
+
+                // ── 20. Notification ──
+                if (typeof Notification !== 'undefined')
+                    Object.defineProperty(Notification, 'permission', {{ get: () => 'default' }});
+
+                // ── 21. performance.now() jitter — defeat timing fingerprint ──
+                (function() {{
+                    const _origNow = performance.now.bind(performance);
+                    performance.now = __nativeReg(function() {{
+                        return _origNow() + (Math.random() - 0.5) * 0.1;
+                    }}, 'now');
+                }})();
+
+                // ── 22. history.length — simulate real user ──
+                (function() {{
+                    const _fakeLen = Math.floor(Math.random() * 8) + 2;
+                    try {{ Object.defineProperty(history, 'length', {{ get: () => _fakeLen }}); }} catch(e) {{}}
+                }})();
+
+                // ── 23. iframe contentWindow isolation — patch Navigator prototype ──
+                (function() {{
+                    // Re-apply webdriver deletion on every new document via MutationObserver
+                    // and patch iframes as they are inserted
+                    const _origCreateElement = document.createElement.bind(document);
+                    document.createElement = __nativeReg(function(tag, ...a) {{
+                        const el = _origCreateElement(tag, ...a);
+                        if (tag.toLowerCase() === 'iframe') {{
+                            el.addEventListener('load', () => {{
+                                try {{
+                                    const w = el.contentWindow;
+                                    if (w && w.navigator)
+                                        delete Object.getPrototypeOf(w.navigator).webdriver;
+                                }} catch(e) {{}}
+                            }});
+                        }}
+                        return el;
+                    }}, 'createElement');
+                }})();
+
+                // ── 24. window.name persistence simulation ──
+                if (!window.name) window.name = '';
+
+                // ── 25. Intl consistency — timeZone + locale must match context ──
+                (function() {{
+                    const _origDTF = Intl.DateTimeFormat;
+                    Intl.DateTimeFormat = __nativeReg(function(loc, opts) {{
+                        opts = opts || {{}};
+                        if (!opts.timeZone) opts.timeZone = '{chosen_tz}';
+                        return new _origDTF(loc || '{lang_primary}', opts);
+                    }}, 'DateTimeFormat');
+                    Intl.DateTimeFormat.prototype = _origDTF.prototype;
+                    Intl.DateTimeFormat.supportedLocalesOf = _origDTF.supportedLocalesOf.bind(_origDTF);
+                }})();
+
+                // ── 26. RTCPeerConnection — block local IP leak ──
+                (function() {{
+                    const _origRTC = window.RTCPeerConnection;
+                    if (!_origRTC) return;
+                    window.RTCPeerConnection = __nativeReg(function(cfg, ...a) {{
+                        cfg = cfg || {{}};
+                        // force TURN-only to prevent local candidate gathering
+                        cfg.iceTransportPolicy = 'relay';
+                        const pc = new _origRTC(cfg, ...a);
+                        const _origGLC = pc.createOffer.bind(pc);
+                        return pc;
+                    }}, 'RTCPeerConnection');
+                    window.RTCPeerConnection.prototype = _origRTC.prototype;
+                }})();
+
+                // ── 27. IntersectionObserver — realistic async callbacks ──
+                (function() {{
+                    const _origIO = window.IntersectionObserver;
+                    window.IntersectionObserver = __nativeReg(function(cb, opts) {{
+                        const _io = new _origIO((entries, obs) => {{
+                            // add small random delay to mimic real layout engine
+                            setTimeout(() => cb(entries, obs), Math.random() * 50 + 10);
+                        }}, opts);
+                        return _io;
+                    }}, 'IntersectionObserver');
+                    window.IntersectionObserver.prototype = _origIO.prototype;
+                }})();
+
+                // ── 28. visualViewport ──
+                (function() {{
+                    if (!window.visualViewport) return;
+                    const _vvp = window.visualViewport;
+                    Object.defineProperty(_vvp, 'scale',        {{ get: () => 1.0 }});
+                    Object.defineProperty(_vvp, 'offsetLeft',   {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'offsetTop',    {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'pageLeft',     {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'pageTop',      {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'width',        {{ get: () => window.innerWidth  }});
+                    Object.defineProperty(_vvp, 'height',       {{ get: () => window.innerHeight }});
+                }})();
+
+                // ── 29. CSS APIs — signal real Chrome ──
+                if (typeof CSS === 'undefined') window.CSS = {{}};
+                if (!CSS.supports) CSS.supports = __nativeReg(function(p, v) {{
+                    return true; // conservative — real Chrome supports most things
+                }}, 'supports');
+                if (!CSS.escape) CSS.escape = __nativeReg(function(s) {{
+                    return s.replace(/([^\w-])/g, '\\\\$1');
+                }}, 'escape');
+
+                // ── 30. Chrome-specific globals ──
+                if (typeof trustedTypes === 'undefined') {{
+                    window.trustedTypes = {{
+                        createPolicy: (name, rules) => ({{
+                            createHTML:     (s) => s,
+                            createScript:   (s) => s,
+                            createScriptURL:(s) => s,
+                        }}),
+                        isHTML: () => false, isScript: () => false,
+                        isScriptURL: () => false, getAttributeType: () => null,
+                        getPropertyType: () => null, defaultPolicy: null,
+                        emptyHTML: '', emptyScript: '',
+                    }};
+                }}
+                // navigator.scheduling (Chrome 94+)
+                if (!navigator.scheduling) {{
+                    Object.defineProperty(navigator, 'scheduling', {{
+                        get: () => ({{ isInputPending: () => false }})
+                    }});
+                }}
+                // navigator.ink (Chrome 94+)
+                if (!navigator.ink) {{
+                    Object.defineProperty(navigator, 'ink', {{
+                        get: () => ({{ requestPresenter: () => Promise.resolve({{
+                            updateInkTrailStartPoint: () => {{}}
+                        }}) }})
+                    }});
+                }}
+                // navigator.locks
+                if (!navigator.locks) {{
+                    Object.defineProperty(navigator, 'locks', {{
+                        get: () => ({{ request: () => Promise.resolve(), query: () => Promise.resolve({{held:[],pending:[]}}) }})
+                    }});
+                }}
+                // navigator.keyboard
+                if (!navigator.keyboard) {{
+                    Object.defineProperty(navigator, 'keyboard', {{
+                        get: () => ({{ getLayoutMap: () => Promise.resolve(new Map()), lock: () => Promise.resolve(), unlock: () => {{}} }})
+                    }});
+                }}
+
+                // ── 31. SharedArrayBuffer / crossOriginIsolated consistency ──
+                try {{
+                    Object.defineProperty(window, 'crossOriginIsolated', {{ get: () => false }});
+                }} catch(e) {{}}
+
+                // ── 32. Object.getOwnPropertyDescriptor hardening ──
+                // Detectors call this on navigator to check if getter is native
+                (function() {{
+                    const _origGOPD = Object.getOwnPropertyDescriptor;
+                    Object.getOwnPropertyDescriptor = __nativeReg(function(obj, prop) {{
+                        const desc = _origGOPD(obj, prop);
+                        if (desc && typeof desc.get === 'function') {{
+                            // make the getter's toString look native
+                            const _g = desc.get;
+                            if (!_g.toString().includes('[native code]')) {{
+                                try {{
+                                    Object.defineProperty(_g, Symbol.toStringTag, {{ value: 'function' }});
+                                }} catch(e) {{}}
+                            }}
+                        }}
+                        return desc;
+                    }}, 'getOwnPropertyDescriptor');
+                }})();
+
+                // ── 33. Font enumeration hardening ──
+                (function() {{
+                    if (!document.fonts) return;
+                    const _origCheck = document.fonts.check.bind(document.fonts);
+                    // common fonts that should exist on the spoofed OS
+                    const _knownFonts = {json.dumps(
+                        ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia',
+                         'Impact', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Tahoma',
+                         'Segoe UI', 'Calibri', 'Cambria'] if 'Windows' in chrome_ua else
+                        ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia',
+                         'Verdana', 'Trebuchet MS', 'Arial Black', 'Impact',
+                         'Helvetica Neue', 'San Francisco', 'Menlo']
+                    )};
+                    document.fonts.check = __nativeReg(function(font, text) {{
+                        const name = font.replace(/^[\\d.]+px\\s+/, '').replace(/['"]/g, '');
+                        if (_knownFonts.some(f => name.includes(f))) return true;
+                        return _origCheck(font, text);
+                    }}, 'check');
+                }})();
+
+                // ── 34. Cleanup __nativeReg helper (don't expose it) ──
+                delete window.__nativeReg;
+            """)
