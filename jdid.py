@@ -622,6 +622,12 @@ if __name__ == "__main__":
             pass
 
         page.goto("https://abrahamjuliot.github.io/creepjs", timeout=60000)
+
+        # open cryptyos in a new tab simultaneously
+        cryptyos_page = context.new_page()
+        cryptyos_page.goto("https://cryptyos.nl.eu.org/", timeout=60000, wait_until="domcontentloaded")
+        step(0, "Opened cryptyos.nl.eu.org in new tab", GREEN, "🌐")
+
         page.wait_for_timeout(18000)  # let CreepJS fully evaluate
         creep = page.evaluate("""() => {
             const txt = document.body.innerText;
