@@ -22,8 +22,9 @@ def generate_user():
     lname = fake.last_name()
     num = random_num()
 
-    # email = f"{fname.lower()}.{lname.lower()}@{random.choice(DOMAINS)}"
     email = f"kalawssimatrix+{num}@gmail.com"
+    email = f"{fname.lower()}.{lname.lower()}@{random.choice(DOMAINS)}"
+    # username = f"{fname.lower()}{lname.lower()}{num}"
     username = f"{fname.lower()}{lname.lower()}{num}"
     password = f"{fname}{lname}{num}!"
 
@@ -55,6 +56,12 @@ if __name__ == "__main__":
                 "--disable-extensions-except=",
                 "--disable-plugins-discovery",
                 "--start-maximized",
+                # "--proxy-server=socks5://127.0.0.1:9050",
+                "--disable-webrtc",
+                "--enforce-webrtc-ip-permission-check",
+                "--webrtc-ip-handling-policy=disable_non_proxied_udp",
+                "--force-webrtc-ip-handling-policy",
+                "--disable-background-networking",
             ],
             ignore_default_args=["--enable-automation"],
         )
@@ -173,14 +180,14 @@ if __name__ == "__main__":
             try:
                 print("[8] Opening app.codeanywhere.com and clicking Bitbucket...")
                 ca_page = context.new_page()
-                ca_page.goto("https://app.codeanywhere.com/", wait_until="domcontentloaded", timeout=120000)
-                ca_page.wait_for_timeout(5000)
+                ca_page.goto("https://app.codeanywhere.com/", wait_until="networkidle")
+                ca_page.wait_for_timeout(3000)
                 print(f"[8] URL: {ca_page.url}")
-                ca_page.wait_for_selector('#social-bitbucket', timeout=90000)
+                ca_page.wait_for_selector('#social-bitbucket', timeout=30000)
                 ca_page.wait_for_timeout(1000)
                 ca_page.click('#social-bitbucket')
                 print(f"[8] Clicked Bitbucket, URL: {ca_page.url}")
-                ca_page.wait_for_selector('button[value="approve"]', timeout=120000)
+                ca_page.wait_for_selector('button[value="approve"]', timeout=60000)
                 ca_page.click('button[value="approve"]')
                 print(f"[8] Granted access, URL: {ca_page.url}")
             except Exception as e:
@@ -196,7 +203,7 @@ if __name__ == "__main__":
                 ca_page.keyboard.press('Enter')
 
                 print("[9] Waiting for repository selector...")
-                ca_page.wait_for_selector('.GitRepositoryDropdown_placeholder-wrapper__XeYoL', timeout=90000)
+                ca_page.wait_for_selector('.GitRepositoryDropdown_placeholder-wrapper__XeYoL', timeout=30000)
                 ca_page.click('.GitRepositoryDropdown_selected-option-caret-icon__cFRRk')
 
                 try:
@@ -232,8 +239,8 @@ if __name__ == "__main__":
                 print(f"[9] Saved {len(ca_cookies)} Codeanywhere cookies to {cookies_file}")
 
                 print("[9] Waiting for Continue button...")
-                ca_page.wait_for_selector('button[type="submit"]:has-text("Continue")', timeout=90000)
-                ca_page.wait_for_function('document.querySelector(\'button[type="submit"]\') && !document.querySelector(\'button[type="submit"]\').disabled', timeout=90000)
+                ca_page.wait_for_selector('button[type="submit"]:has-text("Continue")', timeout=30000)
+                ca_page.wait_for_function('document.querySelector(\'button[type="submit"]\') && !document.querySelector(\'button[type="submit"]\').disabled', timeout=30000)
                 ca_page.click('button[type="submit"]:has-text("Continue")')
                 print(f"[9] Clicked Continue, URL: {ca_page.url}")
                 ca_page.wait_for_timeout(20000)
