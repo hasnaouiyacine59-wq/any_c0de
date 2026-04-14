@@ -4,9 +4,10 @@ from camoufox.addons import DefaultAddons
 import creep_session
 
 URL_2     = 'https://cryptyos.nl.eu.org/'
-PROXY     = os.getenv('PROXY',     'socks5://127.0.0.1:9050')
-IP_API    = os.getenv('IP_API',    'http://127.0.0.1:5000/ip')
-RESET_API = os.getenv('RESET_API', 'http://127.0.0.1:5000/reset-ip')
+TOR_HOST  = os.getenv('TOR_HOST',   '127.0.0.1')
+PROXY     = os.getenv('PROXY',     f'socks5://{TOR_HOST}:9050')
+IP_API    = os.getenv('IP_API',    f'http://{TOR_HOST}:5000/ip')
+RESET_API = os.getenv('RESET_API', f'http://{TOR_HOST}:5000/reset-ip')
 
 OS_PROFILES = [
     {'os': 'macos',   'window': (1440, 900)},
@@ -72,7 +73,7 @@ with Camoufox(
     i_know_what_im_doing=True,
     firefox_user_prefs={
         'network.proxy.type': 1,
-        'network.proxy.socks': '127.0.0.1',
+        'network.proxy.socks': TOR_HOST,
         'network.proxy.socks_port': 9050,
         'network.proxy.socks_version': 5,
         'network.proxy.socks_remote_dns': True,
