@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REGISTRY="quay.io/mylastres0rt05"
+REGISTRY="quay.io/mylastres0rt05_redhat"
 
 VERSIONS=(
   "v1.44.0-jammy v1.44.0 v1.44 124"
@@ -11,9 +11,9 @@ VERSIONS=(
   # "v1.40.0-jammy v1.40.0 v1.40 120"
 )
 
-echo "==> Building tor-proxy"
-docker build -t "${REGISTRY}/tor-proxy:latest" tor-proxy/
-docker push "${REGISTRY}/tor-proxy:latest"
+echo "==> Building nova_dromidia-proxy"
+docker build -t "${REGISTRY}/nova_dromidia-proxy:latest" tor-proxy/
+docker push "${REGISTRY}/nova_dromidia-proxy:latest"
 
 for entry in "${VERSIONS[@]}"; do
   read -r tag ver label chrome <<< "$entry"
