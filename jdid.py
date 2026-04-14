@@ -30,7 +30,7 @@ def step(n, msg, color=CYAN, status="•"):
     print(f"  {bar} {B}{color}{status}{R} {msg}")
 
 def biss():
-    input(f"  {B}{YELLOW}[PAUSE]{R} Press Enter to continue...")
+    pass
 
 def dump(page, label="dump"):
     import json
@@ -228,8 +228,7 @@ if __name__ == "__main__":
         chosen_viewport  = {"width": vp[0], "height": vp[1]}
         toolbar_height   = random.choice([74, 85, 90])
         dpr              = random.choice([1, 1.25, 1.5, 2])
-        hw_concurrency   = fp["hardwareConcurrency"]
-        device_memory    = fp["deviceMemory"]
+        hw_concurrency, device_memory = 8, 8
         canvas_salt      = random.randint(1, 15)
         audio_salt       = round(random.uniform(0.00001, 0.00009), 6)
         webgl_vendor     = "Google Inc."
@@ -264,8 +263,8 @@ if __name__ == "__main__":
         step(1, "Launching browser...", CYAN, "⟳")
 
         _ext_path = os.path.join(os.path.dirname(__file__), 'ext')
-        browser = p.chromium.launch(
-            channel="chrome",
+        context = p.chromium.launch_persistent_context(
+            _tmp_profile,
             headless=False,
             args=[
                 "--disable-blink-features=AutomationControlled",
@@ -290,9 +289,6 @@ if __name__ == "__main__":
                 f"--user-agent={chrome_ua}",
             ],
             ignore_default_args=["--enable-automation"],
-        )
-
-        context = browser.new_context(
             no_viewport=True,
             locale=chosen_locale,
             timezone_id=chosen_tz,
@@ -446,29 +442,8 @@ if __name__ == "__main__":
             // ── 4. platform ──
             Object.defineProperty(navigator,'platform',{{get:()=>'{_platform}'}});
 
-            // ── 5. userAgentData ──
-            (function() {{
-                const _brands=[
-                    {{brand:'Not=A?Brand',version:'99'}},
-                    {{brand:'Chromium',version:'{_chrome_ver}'}},
-                    {{brand:'Google Chrome',version:'{_chrome_ver}'}},
-                ];
-                const _uad={{
-                    brands:_brands, mobile:false, platform:'{_ua_platform}',
-                    toJSON:()=>({{brands:_brands,mobile:false,platform:'{_ua_platform}'}}),
-                    getHighEntropyValues:(hints)=>Promise.resolve({{
-                        architecture:'x86', bitness:'64', brands:_brands,
-                        fullVersionList:[
-                            {{brand:'Not=A?Brand',version:'99.0.0.0'}},
-                            {{brand:'Chromium',version:'{_chrome_ver}.0.0.0'}},
-                            {{brand:'Google Chrome',version:'{_chrome_ver}.0.0.0'}},
-                        ],
-                        mobile:false, model:'', platform:'{_ua_platform}',
-                        platformVersion:'{_ua_platform_ver}', uaFullVersion:'{_chrome_ver}.0.0.0', wow64:false,
-                    }}),
-                }};
-                Object.defineProperty(navigator,'userAgentData',{{get:()=>_uad}});
-            }})();
+            // ── 5. userAgentData — set undefined so creepjs reports 'unsupported' ──
+            Object.defineProperty(navigator,'userAgentData',{{get:()=>undefined}});
 
             // ── 6. touch ──
             Object.defineProperty(navigator,'maxTouchPoints',{{get:()=>0}});
@@ -619,16 +594,20 @@ if __name__ == "__main__":
                 Object.defineProperty(navigator,'connection',{{get:()=>_conn}});
             }})();
 
-            // ── 16. Permissions ──
+            // ── 16. Permissions (6) + remove gpc ──
             (function() {{
                 const _pq=navigator.permissions.query.bind(navigator.permissions);
                 navigator.permissions.query=function(p){{
-                    if(p.name==='notifications')return Promise.resolve({{state:'default'}});
-                    if(p.name==='geolocation')  return Promise.resolve({{state:'prompt'}});
-                    if(p.name==='camera')       return Promise.resolve({{state:'prompt'}});
-                    if(p.name==='microphone')   return Promise.resolve({{state:'prompt'}});
+                    if(p.name==='notifications')  return Promise.resolve({{state:'default'}});
+                    if(p.name==='geolocation')    return Promise.resolve({{state:'prompt'}});
+                    if(p.name==='camera')         return Promise.resolve({{state:'prompt'}});
+                    if(p.name==='microphone')     return Promise.resolve({{state:'prompt'}});
+                    if(p.name==='clipboard-read') return Promise.resolve({{state:'prompt'}});
+                    if(p.name==='clipboard-write')return Promise.resolve({{state:'granted'}});
                     return _pq(p);
-                }};;
+                }};
+                try {{ delete navigator.globalPrivacyControl; }} catch(e) {{}}
+                Object.defineProperty(navigator,'globalPrivacyControl',{{get:()=>undefined,configurable:true}});
             }})();
 
             // ── 17. speechSynthesis ──
@@ -714,11 +693,20 @@ if __name__ == "__main__":
         step(0, "Visiting CreepJS for fingerprint snapshot...", CYAN, "🔍")
 
         # intercept creepworker.js and return empty script — kills all worker fingerprinting
+        _worker_spoof = f"""
+            Object.defineProperty(self, 'navigator', {{ value: self.navigator || {{}} }});
+            try {{ Object.defineProperty(navigator, 'platform', {{ get: () => '{_platform}' }}); }} catch(e) {{}}
+            try {{ Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => {hw_concurrency} }}); }} catch(e) {{}}
+            try {{ Object.defineProperty(navigator, 'deviceMemory', {{ get: () => {device_memory} }}); }} catch(e) {{}}
+            try {{ Object.defineProperty(navigator, 'language',  {{ get: () => '{lang_primary}' }}); }} catch(e) {{}}
+            try {{ Object.defineProperty(navigator, 'languages', {{ get: () => {json.dumps([t.split(';')[0] for t in accept_lang.split(',')])} }}); }} catch(e) {{}}
+            self.close && self.close();
+        """
         def _block_worker(route):
             url = route.request.url
             rtype = route.request.resource_type
             if "creepworker" in url or rtype in ("script",) and "worker" in url.lower():
-                route.fulfill(status=200, content_type="application/javascript", body="self.close && self.close();")
+                route.fulfill(status=200, content_type="application/javascript", body=_worker_spoof)
             else:
                 route.continue_()
         page.route("**/*", _block_worker)
@@ -1052,4 +1040,4 @@ if __name__ == "__main__":
         except Exception as e:
             step(7, f"ERROR: {e}", RED, "✗")
         context.close()
-        browser.close()
+        shutil.rmtree(_tmp_profile, ignore_errors=True)

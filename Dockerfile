@@ -9,11 +9,6 @@ RUN apt-get update && apt-get install -y \
     curl wget tor gnome-themes-extra fonts-liberation \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# install real Google Chrome
-RUN curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
-    && apt-get update && apt-get install -y /tmp/chrome.deb --no-install-recommends \
-    && rm /tmp/chrome.deb && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

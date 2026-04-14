@@ -55,72 +55,35 @@ script.textContent = "(" + (function() {
 
 
 
-    (function() { // navigator
-        // let a;
-        let fakeNavigator = {};
-        //	fakeNavigator.appCodeName						=
-        //	fakeNavigator.appName							=
-        //	fakeNavigator.appVersion						=
-        //	fakeNavigator.platform							=
-        // fakeNavigator.product =
-        //     fakeNavigator.productSub =
-        //     //	fakeNavigator.userAgent							=
-        //     fakeNavigator.vendor =
-        //     fakeNavigator.vendorSub =
-        //     a = "";
-        // fakeNavigator.deviceMemory =
-        //     fakeNavigator.hardwareConcurrency =
-        //     fakeNavigator.maxTouchPoints =
-        //     a = 0;
-        fakeNavigator.bluetooth =
-            fakeNavigator.clipboard =
-            // fakeNavigator.connection =
-            //	fakeNavigator.cookieEnabled	=
-            fakeNavigator.credentials =
-            // fakeNavigator.doNotTrack =
-            fakeNavigator.geolocation =
-            // fakeNavigator.keyboard =
-            // fakeNavigator.language =
-            // fakeNavigator.languages =
-            // fakeNavigator.locks =
-            // fakeNavigator.mediaCapabilities =
-            // fakeNavigator.mediaDevices =
-            fakeNavigator.mediaSession =
-            // fakeNavigator.mimeTypes =
-            // fakeNavigator.onLine =
-            fakeNavigator.permissions =
-            fakeNavigator.presentation =
-            fakeNavigator.scheduling =
-            fakeNavigator.serviceWorker =
-            //fakeNavigator.storage =
-            // fakeNavigator.usb =
-            // fakeNavigator.userActivation =
-            // fakeNavigator.userAgentData =
-            fakeNavigator.wakeLock =
-            fakeNavigator.webkitPersistentStorage =
-            fakeNavigator.webkitTemporaryStorage =
-            // fakeNavigator.xr =
-            // a = {};
-            //fakeNavigator.hardwareConcurrency = 4;
-            //fakeNavigator.deviceMemory = "undefined";
-            //fakeNavigator.platform 							= "Win32";
-            fakeNavigator.plugins = [];
-        setValue(fakeNavigator.plugins, "item", function item() { return null; }, false);
-        setValue(fakeNavigator.plugins, "namedItem", function namedItem() { return null; }, false);
-        setValue(fakeNavigator.plugins, "refresh", function refresh() { return null; }, false);
-        for (let i in window.navigator) {
-            if (fakeNavigator[i] !== undefined) {
-                try {
-                    Object.defineProperty(window.navigator, i, {
-                        get: function() {
-                            if (fakeNavigator[i] === "undefined") {
-                                return undefined;
-                            }
-                            return fakeNavigator[i];
+    (function() { // navigator — platform, language, touch, consistency
+        const proto = Object.getPrototypeOf(navigator);
+        const def = (k, v) => { try { Object.defineProperty(proto, k, { get: () => v, configurable: true }); } catch(e){} };
+
+        // stable cores/ram pair for this session
+        const pairs = [[2,4],[4,8],[8,16],[4,16],[8,8]];
+        const pair = pairs[Math.floor(Math.random() * pairs.length)];
+        def('platform', 'MacIntel');
+        def('maxTouchPoints', 0);
+        def('hardwareConcurrency', pair[0]);
+        def('deviceMemory', pair[1]);
+        def('language', 'en-US');
+        def('languages', Object.freeze(['en-US', 'en']));
+        def('vendor', 'Apple Computer, Inc.');
+
+        // spoof userAgentData platform to macOS
+        if (navigator.userAgentData) {
+            try {
+                Object.defineProperty(proto, 'userAgentData', {
+                    get: () => new Proxy(navigator.userAgentData, {
+                        get(t, k) {
+                            if (k === 'platform') return 'macOS';
+                            const v = t[k];
+                            return typeof v === 'function' ? v.bind(t) : v;
                         }
-                    });
-                } catch (e) {}
-            }
+                    }),
+                    configurable: true
+                });
+            } catch(e) {}
         }
     })();
     (function() { // Screen size
@@ -128,38 +91,11 @@ script.textContent = "(" + (function() {
 
         function changeProperty(parent, attribute, cb) {
             Object.defineProperty(window.navigator, attribute, {
-                get: function() {
-                    return cb();
-                },
+                get: function() { return cb(); },
                 set: NOOP,
                 configurable: true
             });
         }
-
-        changeProperty('navigator', 'maxTouchPoints', () => {
-            const Touch = [1, 2, 3, 4, 5, 7];
-            return Touch[Math.floor(Math.random() * Touch.length)];
-        })
-
-        changeProperty('navigator', 'deviceMemory', () => {
-            const sizeMem = [4, 6, 8, 16];
-            return sizeMem[Math.floor(Math.random() * sizeMem.length)];
-        })
-
-        changeProperty('navigator', 'hardwareConcurrency', () => {
-            const hardware = [2, 4, 8];
-            return hardware[Math.floor(Math.random() * hardware.length)];
-        })
-
-        // Ví dụ:  hardware = 2 thì set sizeMem = 4; Touch = 3
-        //         hardware = 4,6 thì set sizeMem = 8; Touch = 4,5,6
-
-
-
-        changeProperty('navigator', 'languages', () => {
-            const lang = ['["vi-VN", "vi", "fr-FR","fr", "en-US", "en"]', '["vi-VN", "fr-FR", "en-US"]', '["en", "en-US"]', '["vi", "vi-VN"]'];
-            return lang[Math.floor(Math.random() * lang.length)];
-        })
 
 
         const mapWidth = new Map();
@@ -536,8 +472,64 @@ script.textContent = "(" + (function() {
         HTMLCanvasElement.prototype.toBlob.toString = origToBlob.toString.bind(origToBlob);
     })();
 
-    (function() { // Intl
-        window.Intl = undefined;
+    (function() { // chrome.runtime mock (headless detection)
+        if (!window.chrome) {
+            Object.defineProperty(window, 'chrome', { writable: true, enumerable: true, configurable: false, value: {} });
+        }
+        if (!('runtime' in window.chrome)) {
+            window.chrome.runtime = {
+                OnInstalledReason: { CHROME_UPDATE:'chrome_update', INSTALL:'install', SHARED_MODULE_UPDATE:'shared_module_update', UPDATE:'update' },
+                OnRestartRequiredReason: { APP_UPDATE:'app_update', OS_UPDATE:'os_update', PERIODIC:'periodic' },
+                PlatformArch: { ARM:'arm', ARM64:'arm64', MIPS:'mips', MIPS64:'mips64', X86_32:'x86-32', X86_64:'x86-64' },
+                PlatformNaclArch: { ARM:'arm', MIPS:'mips', MIPS64:'mips64', X86_32:'x86-32', X86_64:'x86-64' },
+                PlatformOs: { ANDROID:'android', CROS:'cros', LINUX:'linux', MAC:'mac', OPENBSD:'openbsd', WIN:'win' },
+                RequestUpdateCheckStatus: { NO_UPDATE:'no_update', THROTTLED:'throttled', UPDATE_AVAILABLE:'update_available' },
+                get id() { return undefined; },
+                connect: null,
+                sendMessage: null,
+            };
+        }
+    })();
+    (function() { // navigator.plugins proper mock
+        if (navigator.plugins && navigator.plugins.length) return;
+        const makePlugin = (name, desc, filename, mimes) => {
+            const plugin = Object.create(Plugin.prototype);
+            Object.defineProperties(plugin, {
+                name: { value: name, enumerable: true },
+                description: { value: desc, enumerable: true },
+                filename: { value: filename, enumerable: true },
+                length: { value: mimes.length, enumerable: true },
+            });
+            mimes.forEach((m, i) => {
+                const mt = Object.create(MimeType.prototype);
+                Object.defineProperties(mt, {
+                    type: { value: m.type, enumerable: true },
+                    suffixes: { value: m.suffixes, enumerable: true },
+                    description: { value: m.description, enumerable: true },
+                    enabledPlugin: { value: plugin, enumerable: true },
+                });
+                Object.defineProperty(plugin, i, { value: mt, enumerable: true });
+                Object.defineProperty(plugin, m.type, { value: mt, enumerable: false });
+            });
+            return plugin;
+        };
+        const plugins = [
+            makePlugin('PDF Viewer','Portable Document Format','internal-pdf-viewer',[{type:'application/pdf',suffixes:'pdf',description:''},{type:'text/pdf',suffixes:'pdf',description:''}]),
+            makePlugin('Chrome PDF Viewer','Portable Document Format','internal-pdf-viewer',[{type:'application/pdf',suffixes:'pdf',description:''},{type:'text/pdf',suffixes:'pdf',description:''}]),
+            makePlugin('Chromium PDF Viewer','Portable Document Format','internal-pdf-viewer',[{type:'application/pdf',suffixes:'pdf',description:''},{type:'text/pdf',suffixes:'pdf',description:''}]),
+            makePlugin('Microsoft Edge PDF Viewer','Portable Document Format','internal-pdf-viewer',[{type:'application/pdf',suffixes:'pdf',description:''},{type:'text/pdf',suffixes:'pdf',description:''}]),
+            makePlugin('WebKit built-in PDF','Portable Document Format','internal-pdf-viewer',[{type:'application/pdf',suffixes:'pdf',description:''},{type:'text/pdf',suffixes:'pdf',description:''}]),
+        ];
+        const pluginArray = Object.create(PluginArray.prototype);
+        plugins.forEach((p, i) => {
+            Object.defineProperty(pluginArray, i, { value: p, enumerable: true });
+            Object.defineProperty(pluginArray, p.name, { value: p, enumerable: false });
+        });
+        Object.defineProperty(pluginArray, 'length', { value: plugins.length, enumerable: true });
+        Object.defineProperty(pluginArray, 'item', { value: i => pluginArray[i] || null });
+        Object.defineProperty(pluginArray, 'namedItem', { value: n => pluginArray[n] || null });
+        Object.defineProperty(pluginArray, 'refresh', { value: () => {} });
+        Object.defineProperty(Object.getPrototypeOf(navigator), 'plugins', { get: () => pluginArray, configurable: true });
     })();
     (function() { // Fonts
         let offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth");
