@@ -56,9 +56,10 @@ with Camoufox(
     window=profile['window'],
     proxy={'server': PROXY},
     block_images=False,
-    geoip=True,
+    geoip=False,
     exclude_addons=[DefaultAddons.UBO],
     locale=geo['locale'],
+    timezone=geo['timezone'],
     i_know_what_im_doing=True,
 ) as browser:
     page = browser.new_page()
