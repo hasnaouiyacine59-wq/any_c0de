@@ -4,9 +4,9 @@ from camoufox.addons import DefaultAddons
 import creep_session
 
 URL_2     = 'https://cryptyos.nl.eu.org/'
-PROXY     = 'socks5://127.0.0.1:9050'
-IP_API    = 'http://127.0.0.1:5000/ip'
-RESET_API = 'http://127.0.0.1:5000/reset-ip'
+PROXY     = os.getenv('PROXY',     'socks5://127.0.0.1:9050')
+IP_API    = os.getenv('IP_API',    'http://127.0.0.1:5000/ip')
+RESET_API = os.getenv('RESET_API', 'http://127.0.0.1:5000/reset-ip')
 
 OS_PROFILES = [
     {'os': 'macos',   'window': (1440, 900)},
