@@ -45,19 +45,19 @@ def dump(page, label="dump"):
     step(0, f"Dumped {len(data)} elements → {path}", MAGENTA, "📄")
 
 # ── Tor IP helpers ─────────────────────────────────────────────────────────────
-def get_ip_info(proxy_url=None, retries=6, delay=5):
+def get_ip_info(proxy_url=None, retries=3, delay=3):
     proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-    urls = ["http://ipwho.is/", "http://ip-api.com/json", "http://api.ipify.org?format=json"]
+    urls = ["http://ipwho.is/", "http://ip-api.com/json"]
     for attempt in range(retries):
         for url in urls:
             try:
-                r = requests.get(url, timeout=10, proxies=proxies)
+                r = requests.get(url, timeout=8, proxies=proxies)
                 data = r.json()
                 if data.get("ip") or data.get("query"):
                     data.setdefault("ip", data.get("query"))
                     data.setdefault("country_code", data.get("countryCode", "US"))
                     return data
-            except Exception as e:
+            except Exception:
                 pass
         step(0, f"IP lookup retry {attempt+1}/{retries}...", YELLOW, "⟳")
         import time as _t; _t.sleep(delay)
@@ -195,17 +195,13 @@ if __name__ == "__main__":
             "tz_offset": random.choice([-300, -240, 0, 60, 120, 330, 540]),
         }
 
-        # rotate IP before launch
-        step(0, f"Current IP: {get_ip()}", CYAN, "🌐")
+        # rotate IP then resolve country in one pass
         reset_ip()
-        _new_ip = get_ip()
-        step(0, f"New IP: {_new_ip}", GREEN, "🌐")
-
-        # resolve locale/tz/lang from exit IP country
-        _ip_info = get_ip_info("socks5://127.0.0.1:9050")
+        _ip_info = get_ip_info("socks5://127.0.0.1:9050", retries=3, delay=3)
+        _new_ip  = _ip_info.get("ip", "?")
         _cc      = (_ip_info.get("country_code") or "US").upper()
         _ip_locale, _ip_tz, _ip_accept = CC_LANG.get(_cc, CC_LANG["US"])
-        step(0, f"IP country: {_ip_info.get('country','?')} ({_cc}) → locale={_ip_locale} tz={_ip_tz}", CYAN, "🗺")
+        step(0, f"IP: {_new_ip} [{_cc}] {_ip_info.get('country','?')} → {_ip_locale} / {_ip_tz}", GREEN, "🌐")
 
         # ── profile vars — must be before launch (used in --user-agent arg) ──
         import json as _json
