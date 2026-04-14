@@ -1,4 +1,5 @@
 faker
+camoufox[geoip]
 playwright
 opencv-python
 numpy
