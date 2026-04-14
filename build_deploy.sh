@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-
+git pull
 REGISTRY="quay.io/mylastres0rt05_redhat"
+docker login -u='mylastres0rt05_redhat' -p='FblabXC4LK1oW8SekCVMi+98cxukLiBephztGlutNdxQSoLVacTSvDbxZi9/qrbf' quay.io
 
 VERSIONS=(
   "v1.44.0-jammy v1.44.0 v1.44 124"
@@ -15,15 +16,13 @@ echo "==> Building nova_dromidia-proxy"
 docker build -t "${REGISTRY}/nova_dromidia-proxy:latest" tor-proxy/
 docker push "${REGISTRY}/nova_dromidia-proxy:latest"
 
-for entry in "${VERSIONS[@]}"; do
-  read -r tag ver label chrome <<< "$entry"
-  echo "==> Building thor-session:${label} (Chrome ${chrome})"
-  docker build \
-    --build-arg PLAYWRIGHT_TAG="${tag}" \
-    --build-arg PLAYWRIGHT_VERSION="${ver}" \
-    --build-arg CHROME_VERSION="${chrome}" \
-    -t "${REGISTRY}/thor-session:${label}" .
-  docker push "${REGISTRY}/thor-session:${label}"
-done
+# 1. pull latest
+
+
+# 2. build & tag for quay.io
+docker build -t "${REGISTRY}/nova_dromidia:latest" .
+docker push "${REGISTRY}/nova_dromidia:latest"
+
+
 
 echo "==> Done"
