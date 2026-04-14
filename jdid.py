@@ -45,6 +45,89 @@ def dump(page, label="dump"):
     step(0, f"Dumped {len(data)} elements → {path}", MAGENTA, "📄")
 
 # ── Tor IP helpers ─────────────────────────────────────────────────────────────
+def get_ip_info(proxy_url=None, retries=6, delay=5):
+    proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+    urls = ["http://ipwho.is/", "http://ip-api.com/json", "http://api.ipify.org?format=json"]
+    for attempt in range(retries):
+        for url in urls:
+            try:
+                r = requests.get(url, timeout=10, proxies=proxies)
+                data = r.json()
+                if data.get("ip") or data.get("query"):
+                    data.setdefault("ip", data.get("query"))
+                    data.setdefault("country_code", data.get("countryCode", "US"))
+                    return data
+            except Exception as e:
+                pass
+        step(0, f"IP lookup retry {attempt+1}/{retries}...", YELLOW, "⟳")
+        import time as _t; _t.sleep(delay)
+    return {}
+
+CC_LANG = {
+    "US": ("en-US", "America/New_York",    "en-US,en;q=0.9"),
+    "GB": ("en-GB", "Europe/London",       "en-GB,en;q=0.9"),
+    "DE": ("de-DE", "Europe/Berlin",       "de-DE,de;q=0.9,en;q=0.8"),
+    "FR": ("fr-FR", "Europe/Paris",        "fr-FR,fr;q=0.9,en;q=0.8"),
+    "IT": ("it-IT", "Europe/Rome",         "it-IT,it;q=0.9,en;q=0.8"),
+    "ES": ("es-ES", "Europe/Madrid",       "es-ES,es;q=0.9,en;q=0.8"),
+    "NL": ("nl-NL", "Europe/Amsterdam",    "nl-NL,nl;q=0.9,en;q=0.8"),
+    "PL": ("pl-PL", "Europe/Warsaw",       "pl-PL,pl;q=0.9,en;q=0.8"),
+    "BR": ("pt-BR", "America/Sao_Paulo",   "pt-BR,pt;q=0.9,en;q=0.8"),
+    "RU": ("ru-RU", "Europe/Moscow",       "ru-RU,ru;q=0.9,en;q=0.8"),
+    "TR": ("tr-TR", "Europe/Istanbul",     "tr-TR,tr;q=0.9,en;q=0.8"),
+    "JP": ("ja-JP", "Asia/Tokyo",          "ja-JP,ja;q=0.9,en;q=0.8"),
+    "CN": ("zh-CN", "Asia/Shanghai",       "zh-CN,zh-Hans;q=0.9,en;q=0.8"),
+    "SE": ("sv-SE", "Europe/Stockholm",    "sv-SE,sv;q=0.9,en;q=0.8"),
+    "CA": ("en-CA", "America/Toronto",     "en-CA,en;q=0.9,fr;q=0.8"),
+    "AU": ("en-AU", "Australia/Sydney",    "en-AU,en;q=0.9"),
+    "IN": ("en-IN", "Asia/Kolkata",        "en-IN,en;q=0.9,hi;q=0.8"),
+    "MX": ("es-MX", "America/Mexico_City", "es-MX,es;q=0.9,en;q=0.8"),
+    "KR": ("ko-KR", "Asia/Seoul",          "ko-KR,ko;q=0.9,en;q=0.8"),
+    "SG": ("en-SG", "Asia/Singapore",      "en-SG,en;q=0.9,zh;q=0.8"),
+    "NO": ("nb-NO", "Europe/Oslo",         "nb-NO,nb;q=0.9,en;q=0.8"),
+    "CH": ("de-CH", "Europe/Zurich",       "de-CH,de;q=0.9,en;q=0.8"),
+    "AT": ("de-AT", "Europe/Vienna",       "de-AT,de;q=0.9,en;q=0.8"),
+    "BE": ("fr-BE", "Europe/Brussels",     "fr-BE,fr;q=0.9,nl;q=0.8,en;q=0.7"),
+    "MA": ("ar-MA", "Africa/Casablanca",   "ar-MA,ar;q=0.9,fr;q=0.8,en;q=0.7"),
+    "DZ": ("ar-DZ", "Africa/Algiers",      "ar-DZ,ar;q=0.9,fr;q=0.8,en;q=0.7"),
+    "SA": ("ar-SA", "Asia/Riyadh",         "ar-SA,ar;q=0.9,en;q=0.8"),
+    "AE": ("ar-AE", "Asia/Dubai",          "ar-AE,ar;q=0.9,en;q=0.8"),
+    "ZA": ("en-ZA", "Africa/Johannesburg", "en-ZA,en;q=0.9"),
+    "NG": ("en-NG", "Africa/Lagos",        "en-NG,en;q=0.9"),
+    "UA": ("uk-UA", "Europe/Kyiv",         "uk-UA,uk;q=0.9,en;q=0.8"),
+    "RO": ("ro-RO", "Europe/Bucharest",    "ro-RO,ro;q=0.9,en;q=0.8"),
+    "CZ": ("cs-CZ", "Europe/Prague",       "cs-CZ,cs;q=0.9,en;q=0.8"),
+    "PT": ("pt-PT", "Europe/Lisbon",       "pt-PT,pt;q=0.9,en;q=0.8"),
+    "HU": ("hu-HU", "Europe/Budapest",     "hu-HU,hu;q=0.9,en;q=0.8"),
+    "GR": ("el-GR", "Europe/Athens",       "el-GR,el;q=0.9,en;q=0.8"),
+    "ID": ("id-ID", "Asia/Jakarta",        "id-ID,id;q=0.9,en;q=0.8"),
+    "TH": ("th-TH", "Asia/Bangkok",        "th-TH,th;q=0.9,en;q=0.8"),
+    "VN": ("vi-VN", "Asia/Ho_Chi_Minh",    "vi-VN,vi;q=0.9,en;q=0.8"),
+    "PH": ("en-PH", "Asia/Manila",         "en-PH,en;q=0.9,fil;q=0.8"),
+    "NZ": ("en-NZ", "Pacific/Auckland",    "en-NZ,en;q=0.9"),
+    "AR": ("es-AR", "America/Argentina/Buenos_Aires", "es-AR,es;q=0.9,en;q=0.8"),
+    "CL": ("es-CL", "America/Santiago",    "es-CL,es;q=0.9,en;q=0.8"),
+    "CO": ("es-CO", "America/Bogota",      "es-CO,es;q=0.9,en;q=0.8"),
+    "HK": ("zh-HK", "Asia/Hong_Kong",      "zh-HK,zh-Hant;q=0.9,en;q=0.8"),
+    "TW": ("zh-TW", "Asia/Taipei",         "zh-TW,zh-Hant;q=0.9,en;q=0.8"),
+    "IE": ("en-IE", "Europe/Dublin",       "en-IE,en;q=0.9"),
+    "FI": ("fi-FI", "Europe/Helsinki",     "fi-FI,fi;q=0.9,en;q=0.8"),
+    "DK": ("da-DK", "Europe/Copenhagen",   "da-DK,da;q=0.9,en;q=0.8"),
+    "BG": ("bg-BG", "Europe/Sofia",        "bg-BG,bg;q=0.9,en;q=0.8"),
+    "HR": ("hr-HR", "Europe/Zagreb",       "hr-HR,hr;q=0.9,en;q=0.8"),
+    "SK": ("sk-SK", "Europe/Bratislava",   "sk-SK,sk;q=0.9,en;q=0.8"),
+    "LT": ("lt-LT", "Europe/Vilnius",      "lt-LT,lt;q=0.9,en;q=0.8"),
+    "LV": ("lv-LV", "Europe/Riga",         "lv-LV,lv;q=0.9,en;q=0.8"),
+    "EE": ("et-EE", "Europe/Tallinn",      "et-EE,et;q=0.9,en;q=0.8"),
+    "RS": ("sr-RS", "Europe/Belgrade",     "sr-RS,sr-Cyrl;q=0.9,en;q=0.8"),
+    "PK": ("ur-PK", "Asia/Karachi",        "ur-PK,ur;q=0.9,en;q=0.8"),
+    "BD": ("bn-BD", "Asia/Dhaka",          "bn-BD,bn;q=0.9,en;q=0.8"),
+    "EG": ("ar-EG", "Africa/Cairo",        "ar-EG,ar;q=0.9,en;q=0.8"),
+    "IL": ("he-IL", "Asia/Jerusalem",      "he-IL,he;q=0.9,en;q=0.8"),
+    "KZ": ("kk-KZ", "Asia/Almaty",         "kk-KZ,kk;q=0.9,ru;q=0.8,en;q=0.7"),
+    "MY": ("ms-MY", "Asia/Kuala_Lumpur",   "ms-MY,ms;q=0.9,en;q=0.8"),
+}
+
 def get_ip():
     try:
         r = requests.get("http://127.0.0.1:5000/ip", timeout=5)
@@ -115,7 +198,14 @@ if __name__ == "__main__":
         # rotate IP before launch
         step(0, f"Current IP: {get_ip()}", CYAN, "🌐")
         reset_ip()
-        step(0, f"New IP: {get_ip()}", GREEN, "🌐")
+        _new_ip = get_ip()
+        step(0, f"New IP: {_new_ip}", GREEN, "🌐")
+
+        # resolve locale/tz/lang from exit IP country
+        _ip_info = get_ip_info("socks5://127.0.0.1:9050")
+        _cc      = (_ip_info.get("country_code") or "US").upper()
+        _ip_locale, _ip_tz, _ip_accept = CC_LANG.get(_cc, CC_LANG["US"])
+        step(0, f"IP country: {_ip_info.get('country','?')} ({_cc}) → locale={_ip_locale} tz={_ip_tz}", CYAN, "🗺")
 
         # ── profile vars — must be before launch (used in --user-agent arg) ──
         import json as _json
@@ -134,11 +224,11 @@ if __name__ == "__main__":
         chrome_ua        = prof["chrome_ua"]
         _chrome_ver      = "130"
         _app_version     = chrome_ua.split("Mozilla/5.0 ")[1]
-        chosen_locale    = random.choice(LOCALES)
-        chosen_tz        = random.choice(TIMEZONES)
+        chosen_locale    = _ip_locale
+        chosen_tz        = _ip_tz
+        accept_lang      = _ip_accept
         lang_primary     = chosen_locale
         lang_base        = chosen_locale.split("-")[0]
-        accept_lang      = f"{chosen_locale},{lang_base};q=0.9,en;q=0.8"
         chosen_viewport  = {"width": vp[0], "height": vp[1]}
         toolbar_height   = random.choice([74, 85, 90])
         dpr              = random.choice([1, 1.25, 1.5, 2])
@@ -187,6 +277,7 @@ if __name__ == "__main__":
                 "--disable-infobars",
                 "--disable-dev-shm-usage",
                 "--no-sandbox",
+                "--enable-extensions",
                 f"--disable-extensions-except={os.path.join(os.path.dirname(__file__), 'ext')}",
                 f"--load-extension={os.path.join(os.path.dirname(__file__), 'ext')}",
                 "--disable-plugins-discovery",
@@ -240,6 +331,25 @@ if __name__ == "__main__":
         context.add_init_script(f"""
             // ── 1. webdriver ──
             try {{ delete Object.getPrototypeOf(navigator).webdriver; }} catch(e) {{}}
+
+            // ── fix ActiveText color (headless detection) ──
+            // In Xvfb/headless, getComputedStyle returns rgb(255,0,0) for ActiveText
+            // Patch getComputedStyle to return a normal color instead
+            (function() {{
+                const _origGCS = window.getComputedStyle;
+                window.getComputedStyle = function(el, pseudo) {{
+                    const style = _origGCS.call(this, el, pseudo);
+                    const _origGPV = style.getPropertyValue.bind(style);
+                    style.getPropertyValue = function(prop) {{
+                        const val = _origGPV(prop);
+                        if (val === 'rgb(255, 0, 0)') return 'rgb(220, 53, 69)';
+                        return val;
+                    }};
+                    if (style.backgroundColor === 'rgb(255, 0, 0)')
+                        Object.defineProperty(style, 'backgroundColor', {{ get: () => 'rgb(220, 53, 69)' }});
+                    return style;
+                }};
+            }})();
 
             // ── block service/shared workers from leaking real values ──
             (function() {{
@@ -668,7 +778,8 @@ if __name__ == "__main__":
         # print summary table
         print(f"\n  {B}{MAGENTA}{'─'*50}{R}")
         print(f"  {B}{CYAN}  SESSION  {R}: {session_id}")
-        print(f"  {B}{CYAN}  TOR IP   {R}: {report['tor_ip']}")
+        print(f"  {B}{CYAN}  TOR IP   {R}: {report['tor_ip']}  [{_cc}] {_ip_info.get('country','?')}")
+        print(f"  {B}{CYAN}  LOCALE   {R}: {chosen_locale} / {chosen_tz}")
         for k, v in report["fingerprint"].items():
             color = RED if k == "headless%" and v and int(v) > 20 else GREEN
             print(f"  {B}{CYAN}  {k:<10}{R}: {B}{color}{v}{R}")
