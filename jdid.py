@@ -267,8 +267,9 @@ if __name__ == "__main__":
         _tmp_profile = tempfile.mkdtemp(prefix="pw_profile_")
         step(1, "Launching browser...", CYAN, "⟳")
 
-        context = p.chromium.launch_persistent_context(
-            _tmp_profile,
+        _ext_path = os.path.join(os.path.dirname(__file__), 'ext')
+        browser = p.chromium.launch(
+            channel="chrome",
             headless=False,
             args=[
                 "--disable-blink-features=AutomationControlled",
@@ -277,13 +278,12 @@ if __name__ == "__main__":
                 "--disable-infobars",
                 "--disable-dev-shm-usage",
                 "--no-sandbox",
-                "--enable-extensions",
-                f"--disable-extensions-except={os.path.join(os.path.dirname(__file__), 'ext')}",
-                f"--load-extension={os.path.join(os.path.dirname(__file__), 'ext')}",
+                f"--disable-extensions-except={_ext_path}",
+                f"--load-extension={_ext_path}",
                 "--disable-plugins-discovery",
                 "--start-maximized",
                 "--force-device-scale-factor=1",
-                "--font-render-hinting=none",  # consistent font metrics across environments
+                "--font-render-hinting=none",
                 "--proxy-server=socks5://127.0.0.1:9050",
                 "--disable-webrtc",
                 "--enforce-webrtc-ip-permission-check",
@@ -294,6 +294,9 @@ if __name__ == "__main__":
                 f"--user-agent={chrome_ua}",
             ],
             ignore_default_args=["--enable-automation"],
+        )
+
+        context = browser.new_context(
             no_viewport=True,
             locale=chosen_locale,
             timezone_id=chosen_tz,
@@ -737,6 +740,7 @@ if __name__ == "__main__":
         cryptyos_page = context.new_page()
         cryptyos_page.goto("https://cryptyos.nl.eu.org/", timeout=60000, wait_until="domcontentloaded")
         step(0, "Opened cryptyos.nl.eu.org in new tab", GREEN, "🌐")
+        biss()
 
         page.wait_for_timeout(18000)  # let CreepJS fully evaluate
         creep = page.evaluate("""() => {
@@ -1052,4 +1056,4 @@ if __name__ == "__main__":
         except Exception as e:
             step(7, f"ERROR: {e}", RED, "✗")
         context.close()
-        shutil.rmtree(_tmp_profile, ignore_errors=True)
+        browser.close()

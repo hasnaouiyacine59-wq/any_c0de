@@ -1,13 +1,18 @@
 FROM python:3.10-slim
 
-# system deps for Playwright + Xvfb + noVNC
+# system deps
 RUN apt-get update && apt-get install -y \
-    xvfb x11vnc fluxbox novnc websockify \
+    xvfb x11vnc fluxbox \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libgbm1 libasound2 libpango-1.0-0 libcairo2 \
-    curl wget tor gnome-themes-extra \
+    curl wget tor gnome-themes-extra fonts-liberation \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# install real Google Chrome
+RUN curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
+    && apt-get update && apt-get install -y /tmp/chrome.deb --no-install-recommends \
+    && rm /tmp/chrome.deb && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY requirements.txt .
@@ -22,6 +27,5 @@ RUN echo "SocksPort 9050\nControlPort 9051\nCookieAuthentication 0" > /etc/tor/t
 COPY docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 6080 = noVNC web, 5900 = raw VNC
-EXPOSE 6080 5900
+EXPOSE 5900
 ENTRYPOINT ["/entrypoint.sh"]
