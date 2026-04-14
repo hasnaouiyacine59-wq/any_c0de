@@ -40,6 +40,17 @@ def get_ip_info(ip):
         return {'ip': ip, 'country': '?', 'cc': 'US', 'city': '?', 'locale': 'en-US', 'timezone': 'America/New_York'}
 
 # ── rotate IP + resolve geo ──
+print("[*] Waiting for Tor to bootstrap...")
+for _ in range(30):
+    try:
+        if requests.get(IP_API, timeout=5).status_code == 200:
+            break
+    except Exception:
+        pass
+    time.sleep(2)
+else:
+    print("[!] Tor not ready after 60s, continuing anyway...")
+
 reset_ip()
 time.sleep(3)
 raw_ip  = creep_session.get_ip(IP_API)
