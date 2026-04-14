@@ -178,7 +178,13 @@ if __name__ == "__main__":
 
     with sync_playwright() as p:
         banner()
-        vp = random.choice(VIEWPORTS)
+        # use Xvfb screen resolution if set by entrypoint, else random
+        _env_screen = os.environ.get("SCREEN_RES", "")
+        if _env_screen and "x" in _env_screen:
+            _sw, _sh = map(int, _env_screen.split("x")[:2])
+            vp = (_sw, _sh)
+        else:
+            vp = random.choice(VIEWPORTS)
 
         # unique per-run fingerprint values
         fp = {
@@ -754,13 +760,17 @@ if __name__ == "__main__":
 
         # intercept creepworker.js and return empty script — kills all worker fingerprinting
         _worker_spoof = f"""
-            Object.defineProperty(self, 'navigator', {{ value: self.navigator || {{}} }});
-            try {{ Object.defineProperty(navigator, 'platform', {{ get: () => '{_platform}' }}); }} catch(e) {{}}
-            try {{ Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => {hw_concurrency} }}); }} catch(e) {{}}
-            try {{ Object.defineProperty(navigator, 'deviceMemory', {{ get: () => {device_memory} }}); }} catch(e) {{}}
-            try {{ Object.defineProperty(navigator, 'language',  {{ get: () => '{lang_primary}' }}); }} catch(e) {{}}
-            try {{ Object.defineProperty(navigator, 'languages', {{ get: () => {json.dumps([t.split(';')[0] for t in accept_lang.split(',')])} }}); }} catch(e) {{}}
-            self.close && self.close();
+            (function() {{
+                const _def = (k, v) => {{ try {{ Object.defineProperty(self.navigator, k, {{ get: () => v, configurable: true }}); }} catch(e) {{}} }};
+                _def('platform', '{_platform}');
+                _def('hardwareConcurrency', {hw_concurrency});
+                _def('deviceMemory', {device_memory});
+                _def('language', '{lang_primary}');
+                _def('languages', {json.dumps([t.split(';')[0] for t in accept_lang.split(',')])});
+                _def('userAgentData', undefined);
+                _def('vendor', 'Google Inc.');
+                _def('userAgent', '{chrome_ua}');
+            }})();
         """
         def _block_worker(route):
             url = route.request.url

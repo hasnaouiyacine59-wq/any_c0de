@@ -6,8 +6,16 @@ RUN apt-get update && apt-get install -y \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libgbm1 libasound2 libpango-1.0-0 libcairo2 \
-    curl wget tor gnome-themes-extra fonts-liberation \
+    curl wget tor gnome-themes-extra fonts-liberation tzdata \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
+# MS core fonts: Arial, Georgia, Verdana, Times New Roman, Courier New, Trebuchet, Impact, Comic Sans
+RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free" >> /etc/apt/sources.list.d/contrib.list \
+    && apt-get update \
+    && echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections \
+    && apt-get install -y ttf-mscorefonts-installer --no-install-recommends \
+    && fc-cache -fv \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY requirements.txt .
