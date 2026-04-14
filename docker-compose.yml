@@ -2,8 +2,4 @@ services:
   cum:
     build: .
     container_name: cum
-    environment:
-      - PROXY=socks5://tor-9050:9050
-      - IP_API=http://tor-9050:5000/ip
-      - RESET_API=http://tor-9050:5000/reset-ip
     network_mode: host
