@@ -1,21 +1,9 @@
 services:
-  tor-proxy:
-    image: tor-proxy
-    container_name: tor-9050
-    environment:
-      - SOCKS_PORT=9050
-      - CONTROL_PORT=9051
-      - API_PORT=5000
-    ports:
-      - "9050:9050"
-      - "5000:5000"
-
   cum:
     build: .
     container_name: cum
-    depends_on:
-      - tor-proxy
     environment:
-      - PROXY=socks5://tor-proxy:9050
-      - IP_API=http://tor-proxy:5000/ip
-      - RESET_API=http://tor-proxy:5000/reset-ip
+      - PROXY=socks5://tor-9050:9050
+      - IP_API=http://tor-9050:5000/ip
+      - RESET_API=http://tor-9050:5000/reset-ip
+    network_mode: host
