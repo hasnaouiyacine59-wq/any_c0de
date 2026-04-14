@@ -14,4 +14,4 @@ RUN python -m camoufox fetch
 
 COPY . .
 
-CMD ["bash", "-c", "rm -f /tmp/.X99-lock && Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp & until xdpyinfo -display :99 >/dev/null 2>&1; do sleep 0.5; done && DISPLAY=:99 python cum.py"]
+CMD ["bash", "-c", "rm -f /tmp/.X99-lock && Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp & until xdpyinfo -display :99 >/dev/null 2>&1; do sleep 0.5; done && DISPLAY=:99 python -u cum.py"]
