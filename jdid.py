@@ -674,7 +674,67 @@ if __name__ == "__main__":
             if(!navigator.locks)
                 Object.defineProperty(navigator,'locks',{{get:()=>({{request:()=>Promise.resolve(),query:()=>Promise.resolve({{held:[],pending:[]}})}})}});
 
-            // ── 33. Font check ──
+            // ── 31. iframe.contentWindow — fix HEADCHR_IFRAME detection ──
+            (function() {{
+                const _addProxy = iframe => {{
+                    if (iframe.contentWindow) return;
+                    const proxy = new Proxy(window, {{
+                        get(t, k) {{
+                            if (k === 'self') return proxy;
+                            if (k === 'frameElement') return iframe;
+                            if (k === '0') return undefined;
+                            return Reflect.get(t, k);
+                        }}
+                    }});
+                    Object.defineProperty(iframe, 'contentWindow', {{
+                        get() {{ return proxy; }},
+                        set(v) {{ return v; }},
+                        enumerable: true, configurable: false
+                    }});
+                }};
+                const _origCreate = document.createElement.bind(document);
+                document.createElement = function(...a) {{
+                    const el = _origCreate(...a);
+                    if (a[0] && `${{a[0]}}`.toLowerCase() === 'iframe') {{
+                        const _srcdoc = el.srcdoc;
+                        Object.defineProperty(el, 'srcdoc', {{
+                            configurable: true,
+                            get: () => _srcdoc,
+                            set(v) {{
+                                _addProxy(this);
+                                Object.defineProperty(el, 'srcdoc', {{ configurable:false, writable:false, value:_srcdoc }});
+                                el.srcdoc = v;
+                            }}
+                        }});
+                    }}
+                    return el;
+                }};
+            }})();
+
+            // ── 32. media.codecs — Chromium vs Chrome codec difference ──
+            (function() {{
+                const _orig = HTMLMediaElement.prototype.canPlayType;
+                HTMLMediaElement.prototype.canPlayType = function(arg) {{
+                    if (!arg) return _orig.apply(this, arguments);
+                    const mime = arg.trim().split(';')[0];
+                    const codecs = arg.includes('codecs="') ? arg.replace(/.*codecs="([^"]+)".*/, '$1').split(',').map(s=>s.trim()) : [];
+                    if (mime === 'video/mp4' && codecs.includes('avc1.42E01E')) return 'probably';
+                    if (mime === 'audio/x-m4a' && !codecs.length) return 'maybe';
+                    if (mime === 'audio/aac' && !codecs.length) return 'probably';
+                    return _orig.apply(this, arguments);
+                }};
+            }})();
+
+            // ── 33. console.debug — remove automation leak ──
+            (function() {{
+                const _orig = console.debug;
+                console.debug = function(...a) {{
+                    if (a.length && typeof a[0] === 'string' && a[0].includes('cdc_')) return;
+                    return _orig.apply(this, a);
+                }};
+            }})();
+
+            // ── 34. Font check ──
             (function() {{
                 if(!document.fonts)return;
                 const _origCheck=document.fonts.check.bind(document.fonts);
