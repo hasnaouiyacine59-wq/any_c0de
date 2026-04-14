@@ -1,0 +1,21 @@
+{
+  "session_id": "1776181399",
+  "tor_ip": "192.159.99.79",
+  "fingerprint": {
+    "fp_id": "b38b73c897f8b016278126f4a308e575a5f99d96d7c9a866bd21e89696834fcc",
+    "headless%": "6",
+    "stealth%": "0",
+    "platform": "Linux (Linux x86_64)",
+    "cores_ram": null,
+    "webrtc_ip": null
+  },
+  "raw_summary": "FP ID: b38b73c897f8b016278126f4a308e575a5f99d96d7c9a866bd21e89696834fcc\nFuzzy: ad812f0ef2edde518a6948e4487d37de5f888d36796aaff81d96000000000000\n2707.00 ms\nWebRTC38f3c8b0\nhost connection:\nblocked\nfoundation/ip:\nunsupported\nblocked\nsdp capabilities: 663ced1c\nstun connection:\nblocked\ndevices (1):\nmic\n26.00ms\nTimezoneff3a12c4\nCentral European Summer Time\n\n\nEurope, Vienna\n\n\n-27028688721000\n\n\n-120\n4.00ms\nIntlc27d8092\nen-US\n\n\nJuly at Central European Summer Time\n\n\nAmerican English\n\n\n21 million\n\n\nnext year\n\n\n0 or 1\n\n\none\n1.00ms\nHeadlessdcf85248\nchromium: false\n6% like headless: 0e8c6394\n0% headless: 52defe05\n0% stealth: 0c019315\nplatform hints:\nUbuntu:Linux\n290.00ms\nResistancebfd6ca31\nprivacy: unknown\nsecurity: unknown\nmode: unknown\nextension: unknown\n2601.00ms\nServiceWorkerGlobalScope\nWorker3a473363\nlang/timezone:\nen-US (1 US dollar)\n\n\nEurope/Vienna (-120)\nconfidence: high\ngpu:\nAMD\n\n\nRadeon R9 200 Series, or similar\nuserAgent:\nMozilla/5.0 (X11; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0\ndevice:\nLinux (Linux x86_64)\n\n\nLinux x86_64\n\n\ncores: 8\nuserAgentData:\nunsupported\n327.00ms\nWebGL30b08e15\nimages:281545e3\npixels:0a28f046\nparams (78): 8571adf1\nexts (44): 6ac4e86f\ngpu:\nconfidence: high\nAMD\nRadeon R9 200 Series, or similar\n0.00ms\nScreenc5ae80fc\n...screen: 1536 x 864\n....avail: 1536 x 864\ntouch: false\ndepth: 24|24\nviewport:\n1280\n1280\n1280\n800\n739\n739\nbrowser\nlandscape\nlandscape-primary\n1\n68.00ms\nCanvas 2d0ae59abc\ndata: 348e928a\nrendering:\ntextMetrics:\n0.012932500021457674\n\ud83d\ude00\u263a\u2668...\u262a\u262e\ud83c\udd70\n194.00ms\nFonts4640ff73\nload (2/51): Like undefined\napps: unsupported\nArimo, Cousine\n\n0.157984426\n\ud83d\ude00\u263a\u2668...\u269c\u2696\ud83c\udd70\n7.00ms\nDOMRectf7e9a1b8\nelems A: 0.2924039892211915\nelems B: 0.2924039892211915\nrange A: 0.2924039892211915\nrange B: 0.2924039892211915\n0.1581443310546875\n\ud83d\ude00\u263a\u2668...\u269c\u2696\ud83c\udd70\n14.00ms\nSVGRect8f566c5d\nbBox: 0.09579894104003907\nchar: 0.028903334045410158\nsubs: 0.020003334045410156\ntext: 0.020003334045410156\n0.045824167213439945\n\ud83d\ude00\u263a\u2668...\u2695\u269c\u2696\n193.00ms\nAudio2a09965a\nsum: 35.749968223273754\ngain: -31.502185821533203\nfreq: 167701.76626205444\ntime: 148.475412953645\ntrap: 0.388290345643878\nunique: 4736\ndata:ced5ee87\ncopy:ced5ee87\nvalues: 0bcf0945\n215.00ms\nSpeechfdb1095d\nlocal (0): unsupported\nremote (109): a11cd8dc\nlang (95): d30adb33\ndefault:\nunsupported\n6.00ms\nMedia1e6aa2cf\nmimes (9/12): 32b1222d\n8.00ms\nFeatures: 112+\nJS/DOM: e27778b4 (v109-112)\nCSS: 3f5479cf (v112)\nWindow: 1982ee0b (v112)\n7.00ms\nCSS Media Queries3fa846da\n@media: ee6d94eb\nmatchMedia: ee6d94eb\ntouch device: unknown\nscreen query: 1536 x 864\n10.00ms\nComputed Styleea4a26cd\nkeys (1110): f9fe9d5c\nsystem styles: a2665e0c\n2.00ms\nMath1747db31\nresults: details\n1.00ms\nError7c95559c\nresults: details\n2.00ms\nWindow3054d676\nkeys (880): details\n0.00ms\nHTMLElement75d8ad84\nkeys (316): details\n5.00ms\nNavigatorf513f99f\nproperties (44): e5ebcda5\ndnt: 1\ngpc: false\nlang: en-US, en (en-US)\nmimeTypes (2): 11003d7c\npermissions (1): a2368e02\nplugins (5): 6488a554\nvendor: blocked\nwebgpu: unsupported\nuserAgentData:\nunsupported\ndevice:\nLinux x86_64\n\n\nLinux (Linux x86_64)\n\n\nLinux x86_64\n\n\ncores: 8, touch: 0\nua parsed: Firefox 135\nuserAgent:\nMozilla/5.0 (X11; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0\nappVersion:\n5.0 (X11)\nStatus029f9843\nnetwork:\nunsupported\nbattery:\nunsupported\navailable:\nstorage: 8.46GB\n[9087581388]\ntiming res:\n1\n1\nstack: 29532\nTests\nWorkers\nIframes\nFonts\nTimezone\nWindow Version\nScreen\nPrototype\nDOMRect\nEmojis\nMath\nMachine\nChrome Extensions\nJS Proxy",
+  "geo": {
+    "ip": "192.159.99.79",
+    "country": "United States",
+    "cc": "US",
+    "city": "New York",
+    "locale": "en-US",
+    "timezone": "America/New_York"
+  }
+}

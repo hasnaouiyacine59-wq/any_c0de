@@ -1,0 +1,21 @@
+{
+  "session_id": "1776185946",
+  "tor_ip": "109.70.100.8",
+  "fingerprint": {
+    "fp_id": "da43f0214b5e5aa427e738595dae193f63f0c3fbf44867af63b69e77ca22d1f2",
+    "headless%": "6",
+    "stealth%": "0",
+    "platform": "Linux (Linux x86_64)",
+    "cores_ram": null,
+    "webrtc_ip": null
+  },
+  "raw_summary": "FP ID: da43f0214b5e5aa427e738595dae193f63f0c3fbf44867af63b69e77ca22d1f2\nFuzzy: 9f91bfbdf2eddaf18ab888eb987d37de5f88cf70796a2fb89d9e000000000000\n1168.00 ms\nWebRTC38f3c8b0\nhost connection:\nblocked\nfoundation/ip:\nunsupported\nblocked\nsdp capabilities: 663ced1c\nstun connection:\nblocked\ndevices (1):\nmic\n27.00ms\nTimezone038fad66\nMitteleurop\u00e4ische Sommerzeit\n\n\nEurope, Oslo\n\n\n-27028688008000\n\n\n-120\n3.00ms\nIntl2d09496c\nde-AT\n\n\nJuli um Mitteleurop\u00e4ische Sommerzeit\n\n\nEnglisch (Vereinigte Staaten)\n\n\n21 Millionen\n\n\nn\u00e4chstes Jahr\n\n\n0 oder 1\n\n\none\n1.00ms\nHeadlessdcf85248\nchromium: false\n6% like headless: 0e8c6394\n0% headless: 52defe05\n0% stealth: 0c019315\nplatform hints:\nUbuntu:Linux\n223.00ms\nResistancebfd6ca31\nprivacy: unknown\nsecurity: unknown\nmode: unknown\nextension: unknown\n1051.00ms\nServiceWorkerGlobalScope\nWorker1d28e355\nlang/timezone:\nde-AT (1 US-Dollar)\n\n\nEurope/Oslo (-120)\nconfidence: high\ngpu:\nIntel\n\n\nIntel(R) HD Graphics, or similar\nuserAgent:\nMozilla/5.0 (X11; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0\ndevice:\nLinux (Linux x86_64)\n\n\nLinux x86_64\n\n\ncores: 8\nuserAgentData:\nunsupported\n278.00ms\nWebGLc479fbbc\nimages:281545e3\npixels:0a28f046\nparams (78): a800489d\nexts (44): 6ac4e86f\ngpu:\nconfidence: high\nIntel\nIntel(R) HD Graphics, or similar\n1.00ms\nScreenc5ae80fc\n...screen: 1536 x 864\n....avail: 1536 x 864\ntouch: false\ndepth: 24|24\nviewport:\n1280\n1280\n1280\n800\n739\n739\nbrowser\nlandscape\nlandscape-primary\n1\n54.00ms\nCanvas 2d32640296\ndata: a35d4152\nrendering:\ntextMetrics:\n0.027351666684150698\n\ud83d\ude00\u263a\u2668...\u2611\u2734\ud83c\udd70\n158.00ms\nFonts809c53fb\nload (2/51): Like undefined\napps: unsupported\nArimo, Cousine\n\n0.23522717\n\ud83d\ude00\u263a\u2668...\u2611\u2734\ud83c\udd70\n5.00ms\nDOMRecte38e071b\nelems A: 0.2924039892211915\nelems B: 0.2924039892211915\nrange A: 0.2924039892211915\nrange B: 0.2924039892211915\n0.3149576679992676\n\ud83d\ude00\u263a\u2668...\u2611\u2734\ud83c\udd70\n20.00ms\nSVGRect31482817\nbBox: 0.0969968017578125\nchar: 0.0289\nsubs: 0.02\ntext: 0.02\n0.095153166847229\n\ud83d\ude00\u263a\u2638...\u21aa\u2611\u2734\n133.00ms\nAudio2a09965a\nsum: 35.749968223273754\ngain: -31.502185821533203\nfreq: 167701.76626205444\ntime: 148.475412953645\ntrap: 0.831419622508754\nunique: 4736\ndata:ced5ee87\ncopy:ced5ee87\nvalues: 0bcf0945\n1.00ms\nSpeechfdb1095d\nlocal (0): unsupported\nremote (109): a11cd8dc\nlang (95): d30adb33\ndefault:\nunsupported\n5.00ms\nMedia1e6aa2cf\nmimes (9/12): 32b1222d\n11.00ms\nFeatures: 112+\nJS/DOM: e27778b4 (v109-112)\nCSS: 3f5479cf (v112)\nWindow: 1982ee0b (v112)\n9.00ms\nCSS Media Queries3fa846da\n@media: ee6d94eb\nmatchMedia: ee6d94eb\ntouch device: unknown\nscreen query: 1536 x 864\n14.00ms\nComputed Styleea4a26cd\nkeys (1110): f9fe9d5c\nsystem styles: a2665e0c\n2.00ms\nMath1747db31\nresults: details\n0.00ms\nError7c95559c\nresults: details\n2.00ms\nWindow3054d676\nkeys (880): details\n0.00ms\nHTMLElement75d8ad84\nkeys (316): details\n6.00ms\nNavigator5a94dcb7\nproperties (44): e5ebcda5\ndnt: 1\ngpc: true\nlang: de-AT, de (de-AT)\nmimeTypes (2): 11003d7c\npermissions (1): a2368e02\nplugins (5): 6488a554\nvendor: blocked\nwebgpu: unsupported\nuserAgentData:\nunsupported\ndevice:\nLinux x86_64\n\n\nLinux (Linux x86_64)\n\n\nLinux x86_64\n\n\ncores: 8, touch: 0\nua parsed: Firefox 135\nuserAgent:\nMozilla/5.0 (X11; Linux x86_64; rv:135.0) Gecko/20100101 Firefox/135.0\nappVersion:\n5.0 (X11)\nStatus029f9843\nnetwork:\nunsupported\nbattery:\nunsupported\navailable:\nstorage: 8.46GB\n[9087581388]\ntiming res:\n1\n1\nstack: 29532\nTests\nWorkers\nIframes\nFonts\nTimezone\nWindow Version\nScreen\nPrototype\nDOMRect\nEmojis\nMath\nMachine\nChrome Extensions\nJS Proxy",
+  "geo": {
+    "ip": "109.70.100.8",
+    "country": "Austria",
+    "cc": "AT",
+    "city": "Vienna",
+    "locale": "de-AT",
+    "timezone": "Europe/Vienna"
+  }
+}
