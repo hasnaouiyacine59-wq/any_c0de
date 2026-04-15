@@ -118,8 +118,44 @@ def get_ip_from_country(country):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/clear-country")
-def clear_country():
+def _fingerprint_for_ip(target_ip: str) -> str | None:
+    """Query Tor consensus to find relay fingerprint by exit IP."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5)
+            s.connect(("127.0.0.1", CONTROL_PORT))
+            s.sendall(b'AUTHENTICATE ""\r\n')
+            s.recv(1024)
+            s.sendall(b"GETINFO ns/all\r\n")
+            data = b""
+            while True:
+                chunk = s.recv(65536)
+                data += chunk
+                if b"250 OK" in data:
+                    break
+        # parse: each relay block has "r <name> <b64fp> ... <ip> ..."
+        for line in data.decode(errors="ignore").splitlines():
+            if line.startswith("r "):
+                parts = line.split()
+                ip = parts[6] if len(parts) > 6 else ""
+                if ip == target_ip:
+                    import base64
+                    fp_bytes = base64.b64decode(parts[2] + "==")
+                    return fp_bytes.hex().upper()
+    except Exception as e:
+        logging.warning("fingerprint lookup failed: %s", e)
+    return None
+
+@app.route("/set-exit-ip/<path:ip>")
+def set_exit_ip(ip):
+    """Set a specific exit node by its IP address."""
+    fp = _fingerprint_for_ip(ip)
+    if not fp:
+        return jsonify({"error": f"no relay found for IP {ip}"}), 404
+    ok, resp = tor_cmd(f"SETCONF ExitNodes={fp} StrictNodes=1\r\n".encode())
+    if ok:
+        _new_circuit()
+    return jsonify({"status": "ok" if ok else "error", "fingerprint": fp, "ip": ip})
     ok, resp = tor_cmd(b"SETCONF ExitNodes= StrictNodes=0\r\n")
     return jsonify({"status": "ok" if ok else "error", "detail": resp})
 
