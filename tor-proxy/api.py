@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-import socket, requests, os, time, threading, random, logging
+import socket, requests, os, time, threading, logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -25,12 +25,6 @@ def tor_cmd(cmd: bytes) -> tuple:
 def _new_circuit():
     tor_cmd(b"SIGNAL NEWNYM\r\n")
 
-def _auto_rotate():
-    """Rotate circuit every 90-150s to avoid long-lived circuit fingerprinting."""
-    while True:
-        time.sleep(random.uniform(90, 150))
-        _new_circuit()
-
 def _keepalive():
     """Keep Tor warm by making a request every 60s to prevent idle circuit loss."""
     proxies = {
@@ -46,7 +40,6 @@ def _keepalive():
             logging.warning("keepalive failed: %s", e)
 
 # start background threads
-threading.Thread(target=_auto_rotate, daemon=True).start()
 threading.Thread(target=_keepalive, daemon=True).start()
 
 IP_SERVICES = [
