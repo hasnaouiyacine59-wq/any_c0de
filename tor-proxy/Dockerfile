@@ -1,6 +1,6 @@
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y tor python3 python3-pip --no-install-recommends \
+RUN apt-get update && apt-get install -y tor tor-geoipdb python3 python3-pip --no-install-recommends \
     && pip3 install flask requests[socks] --break-system-packages \
     && rm -rf /var/lib/apt/lists/*
 
