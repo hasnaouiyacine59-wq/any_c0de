@@ -1,5 +1,7 @@
 from flask import Flask, jsonify
-import socket, requests, os, time, threading, random
+import socket, requests, os, time, threading, random, logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 app = Flask(__name__)
 
@@ -51,7 +53,8 @@ def _get_ip_via_tor():
     for url in IP_SERVICES:
         try:
             return requests.get(url, proxies=proxies, timeout=30).text.strip()
-        except Exception:
+        except Exception as e:
+            logging.warning("IP service %s failed: %s", url, e)
             continue
     raise RuntimeError("all IP services failed")
 
