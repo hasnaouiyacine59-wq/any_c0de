@@ -87,8 +87,25 @@ def _get_ip_via_tor():
 
 @app.route("/reset-ip")
 def reset_ip():
+    old_ip = None
+    try:
+        old_ip = _get_ip_via_tor()
+    except Exception:
+        pass
     _new_circuit()
-    return jsonify({"status": "ok"})
+    _wait_for_circuit(timeout=15)
+    # wait until IP actually changes (up to 30s)
+    deadline = time.time() + 30
+    new_ip = old_ip
+    while time.time() < deadline:
+        try:
+            new_ip = _get_ip_via_tor()
+            if new_ip != old_ip:
+                break
+        except Exception:
+            pass
+        time.sleep(2)
+    return jsonify({"status": "ok", "old_ip": old_ip, "new_ip": new_ip})
 
 @app.route("/ip")
 def get_ip():
