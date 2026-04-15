@@ -31,8 +31,23 @@ def _auto_rotate():
         time.sleep(random.uniform(90, 150))
         _new_circuit()
 
-# start background rotation thread
+def _keepalive():
+    """Keep Tor warm by making a request every 60s to prevent idle circuit loss."""
+    proxies = {
+        "http":  f"socks5h://127.0.0.1:{SOCKS_PORT}",
+        "https": f"socks5h://127.0.0.1:{SOCKS_PORT}",
+    }
+    while True:
+        time.sleep(60)
+        try:
+            requests.get("https://api.ipify.org", proxies=proxies, timeout=15)
+            logging.info("keepalive ok")
+        except Exception as e:
+            logging.warning("keepalive failed: %s", e)
+
+# start background threads
 threading.Thread(target=_auto_rotate, daemon=True).start()
+threading.Thread(target=_keepalive, daemon=True).start()
 
 IP_SERVICES = [
     "https://api.ipify.org",
