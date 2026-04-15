@@ -34,6 +34,14 @@ def _auto_rotate():
 # start background rotation thread
 threading.Thread(target=_auto_rotate, daemon=True).start()
 
+def _get_ip_via_tor():
+    proxies = {
+        "http":  f"socks5h://127.0.0.1:{SOCKS_PORT}",
+        "https": f"socks5h://127.0.0.1:{SOCKS_PORT}",
+    }
+    time.sleep(random.uniform(0.1, 0.8))
+    return requests.get("https://api.ipify.org", proxies=proxies, timeout=15).text
+
 @app.route("/reset-ip")
 def reset_ip():
     _new_circuit()
@@ -42,16 +50,28 @@ def reset_ip():
 @app.route("/ip")
 def get_ip():
     try:
-        proxies = {
-            "http":  f"socks5h://127.0.0.1:{SOCKS_PORT}",
-            "https": f"socks5h://127.0.0.1:{SOCKS_PORT}",
-        }
-        # random delay to prevent timing fingerprint on IP checks
-        time.sleep(random.uniform(0.1, 0.8))
-        ip = requests.get("https://api.ipify.org", proxies=proxies, timeout=15).text
-        return jsonify({"ip": ip})
+        return jsonify({"ip": _get_ip_via_tor()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/ip/<country>")
+def get_ip_from_country(country):
+    try:
+        node = "{" + country.lower() + "}"
+        ok, resp = tor_cmd(f"SETCONF ExitNodes={node} StrictNodes=1\r\n".encode())
+        if not ok:
+            return jsonify({"error": "failed to set exit country", "detail": resp}), 500
+        _new_circuit()
+        time.sleep(3)  # wait for new circuit
+        ip = _get_ip_via_tor()
+        return jsonify({"ip": ip, "country": country.lower()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/clear-country")
+def clear_country():
+    ok, resp = tor_cmd(b"SETCONF ExitNodes= StrictNodes=0\r\n")
+    return jsonify({"status": "ok" if ok else "error", "detail": resp})
 
 @app.route("/status")
 def status():
