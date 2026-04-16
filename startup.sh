@@ -7,17 +7,14 @@ cd /root/nova_din
 
 pip install -q -r requirements.txt
 python -c "
-import subprocess, sys
-try:
-    from camoufox import get_target_path
-    import os
-    installed = os.path.exists(get_target_path())
-except Exception:
-    installed = False
-if installed:
-    print('camoufox already installed, skipping fetch')
+import subprocess, sys, glob
+bins = glob.glob('/root/.camoufox/camoufox*') + glob.glob('/usr/local/lib/python*/dist-packages/camoufox/camoufox*')
+if any(bins):
+    print('camoufox binary found, skipping fetch')
 else:
-    subprocess.run([sys.executable, '-m', 'camoufox', 'fetch'], check=True)
+    r = subprocess.run([sys.executable, '-m', 'camoufox', 'fetch'], check=False)
+    if r.returncode != 0:
+        print('camoufox fetch failed (rate limit?), continuing anyway...')
 "
 
 rm -f /tmp/.X99-lock
