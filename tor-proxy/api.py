@@ -169,6 +169,27 @@ def set_exit_ip(ip):
     ok, resp = tor_cmd(b"SETCONF ExitNodes= StrictNodes=0\r\n")
     return jsonify({"status": "ok" if ok else "error", "detail": resp})
 
+excluded_countries = set()
+
+@app.route("/exclude-country/<country>")
+def exclude_country(country):
+    excluded_countries.add(country.lower())
+    nodes = ",".join("{" + c + "}" for c in excluded_countries)
+    ok, resp = tor_cmd(f"SETCONF ExcludeExitNodes={nodes} StrictNodes=1\r\n".encode())
+    if ok:
+        _new_circuit()
+    return jsonify({"status": "ok" if ok else "error", "excluded_countries": list(excluded_countries)})
+
+@app.route("/exclude-country/<country>", methods=["DELETE"])
+def unexclude_country(country):
+    excluded_countries.discard(country.lower())
+    nodes = ",".join("{" + c + "}" for c in excluded_countries) or ""
+    strict = "1" if excluded_countries else "0"
+    ok, resp = tor_cmd(f"SETCONF ExcludeExitNodes={nodes} StrictNodes={strict}\r\n".encode())
+    if ok:
+        _new_circuit()
+    return jsonify({"status": "ok" if ok else "error", "excluded_countries": list(excluded_countries)})
+
 @app.route("/status")
 def status():
     ok, detail = tor_cmd(b"GETINFO status/bootstrap-phase\r\n")
