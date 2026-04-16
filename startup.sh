@@ -7,9 +7,14 @@ cd /root/nova_din
 
 pip install -q -r requirements.txt
 python -c "
-from camoufox.pkgman import get_path
-import os, subprocess, sys
-if os.path.exists(get_path()):
+import subprocess, sys
+try:
+    from camoufox import get_target_path
+    import os
+    installed = os.path.exists(get_target_path())
+except Exception:
+    installed = False
+if installed:
     print('camoufox already installed, skipping fetch')
 else:
     subprocess.run([sys.executable, '-m', 'camoufox', 'fetch'], check=True)
