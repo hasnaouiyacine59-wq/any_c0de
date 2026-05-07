@@ -13,7 +13,7 @@ COPY api.py /app/api.py
 COPY start.sh /start.sh
 
 RUN chmod +x /start.sh \
-    && mkdir -p /var/lib/tor /var/log/tor /run/tor \
+    && mkdir -p /var/lib/tor /var/log/tor /run/tor /home/customer/.tor \
     && chown -R customer:customer /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor /home/customer \
     && chmod -R g+rwX /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor /home/customer
 
