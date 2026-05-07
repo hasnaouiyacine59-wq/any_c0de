@@ -2,9 +2,6 @@ name: Build & Push tor-proxy
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "tor-proxy/**"
 
 jobs:
   build-push:
