@@ -1,0 +1,27 @@
+name: Build & Push tor-proxy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tor-proxy/**"
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./tor-proxy
+          push: true
+          tags: quay.io/${{ secrets.QUAY_USERNAME }}/tor-proxy:latest

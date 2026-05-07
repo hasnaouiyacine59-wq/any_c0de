@@ -13,8 +13,8 @@ docker push "${REGISTRY}/nova_dromidia-proxy:latest"
 
 
 # 2. build & tag for quay.io
-docker build -t "${REGISTRY}/nova_dromidia:latest" .
-docker push "${REGISTRY}/nova_dromidia:latest"
+# docker build -t "${REGISTRY}/nova_dromidia:latest" .
+# docker push "${REGISTRY}/nova_dromidia:latest"
 
 
 
