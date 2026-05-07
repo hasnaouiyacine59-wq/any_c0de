@@ -14,12 +14,13 @@ COPY start.sh /start.sh
 
 RUN chmod +x /start.sh \
     && mkdir -p /var/lib/tor /var/log/tor /run/tor \
-    && chown -R customer:customer /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor \
-    && chmod -R g+rwX /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor
+    && chown -R customer:customer /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor /home/customer \
+    && chmod -R g+rwX /etc/tor /app /start.sh /var/lib/tor /var/log/tor /run/tor /home/customer
 
 ENV SOCKS_PORT=9050
 ENV CONTROL_PORT=9051
 ENV API_PORT=5000
+ENV HOME=/home/customer
 
 EXPOSE 9050 9051 5000
 
